@@ -43,6 +43,22 @@
   .anim-twinkle { animation:twinkle 1.4s ease-in-out infinite; }
   .anim-wiggle { animation:wiggle 1.2s ease-in-out infinite; }
   .anim-float { animation:float-up 1.8s ease-in-out infinite; }
+  /* Compact calendar toolbar — small buttons that always fit, Day never cut off */
+  .cal-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+  .seg-btn { padding:6px 9px; font-size:12px; font-weight:600; white-space:nowrap; background:transparent; color:#e4e4e7; }
+  @media (min-width:640px){ .seg-btn { padding:6px 12px; font-size:14px; } }
+  .seg-btn.active { background:#3f3f46; }
+  .tool-btn { padding:6px 10px; font-size:13px; font-weight:700; border-radius:8px; background:#27272a; color:#fff; white-space:nowrap; }
+  .tool-btn:hover { background:#3f3f46; }
+  @media (min-width:640px){ .tool-btn { padding:6px 14px; font-size:14px; } }
+  /* Dustin Founder Day — the spectacular one */
+  @keyframes founder-shine { 0%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } 100%{ background-position:0% 50%; } }
+  @keyframes founder-glow { 0%,100%{ box-shadow:0 0 24px rgba(240,180,41,.35), 0 0 60px rgba(255,43,43,.25); } 50%{ box-shadow:0 0 44px rgba(240,180,41,.7), 0 0 90px rgba(255,43,43,.45); } }
+  .founder-hero { background:linear-gradient(120deg, rgba(240,180,41,.30), rgba(255,43,43,.30), rgba(240,180,41,.30)); background-size:200% 200%; border:2px solid #f0b429; animation:founder-shine 5s ease infinite, founder-glow 2.2s ease-in-out infinite; }
+  @keyframes confetti-fall { 0%{ transform:translateY(-30px) rotate(0deg); opacity:0; } 15%{ opacity:1; } 100%{ transform:translateY(190px) rotate(340deg); opacity:0; } }
+  .confetti-piece { position:absolute; top:0; font-size:20px; animation:confetti-fall 2.8s ease-in infinite; }
+  .anim-founder { display:inline-block; animation:cake-bob 1.4s ease-in-out infinite; filter:drop-shadow(0 0 10px rgba(240,180,41,.9)); }
+  .day-cell.founder-day { outline:2px solid #f0b429; outline-offset:-2px; background:linear-gradient(160deg, rgba(240,180,41,.22), rgba(255,43,43,.16)); }
   .evt-pill { display:flex; align-items:center; gap:4px; font-size:11px; line-height:1.25; padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.07); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   .evt-pill:hover { background:rgba(255,255,255,.14); }
   .dot { width:8px; height:8px; border-radius:9999px; flex-shrink:0; }
@@ -104,22 +120,22 @@
   <section class="panel p-5 lg:col-span-2">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="panel-title text-3xl" style="color:var(--cyan);">📅 FAMILY CALENDAR</h2>
-      <div class="flex items-center gap-2">
-        <div class="flex rounded-lg overflow-hidden border border-zinc-700 text-sm font-semibold">
-          <button id="viewMonthBtn" onclick="setView('month')" class="px-3 py-1.5 bg-zinc-700">Month</button>
-          <button id="viewWeekBtn" onclick="setView('week')" class="px-3 py-1.5">Week</button>
-          <button id="viewDayBtn" onclick="setView('day')" class="px-3 py-1.5">Day</button>
+      <div class="cal-tools">
+        <div class="flex rounded-lg overflow-hidden border border-zinc-700 font-semibold shrink-0 max-w-full overflow-x-auto">
+          <button id="viewMonthBtn" onclick="setView('month')" class="seg-btn active">Month</button>
+          <button id="viewWeekBtn" onclick="setView('week')" class="seg-btn">Week</button>
+          <button id="viewDayBtn" onclick="setView('day')" class="seg-btn">Day</button>
         </div>
-        <button onclick="shiftCal(-1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">‹</button>
-        <button onclick="goToday()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Today</button>
-        <button onclick="shiftCal(1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">›</button>
-        <button onclick="openEventModal()" class="px-4 py-1.5 rounded-lg font-bold text-sm text-white" style="background:var(--red);">+ Add Event</button>
-        <button onclick="openCalFullscreen()" class="px-4 py-1.5 rounded-lg font-bold text-sm bg-zinc-800 hover:bg-zinc-700">⛶ Full Screen</button>
+        <button onclick="shiftCal(-1)" class="tool-btn">‹</button>
+        <button onclick="goToday()" class="tool-btn">Today</button>
+        <button onclick="shiftCal(1)" class="tool-btn">›</button>
+        <button onclick="openEventModal()" class="tool-btn text-white" style="background:var(--red);">+ Add Event</button>
+        <button onclick="openCalFullscreen()" class="tool-btn">⛶ Full Screen</button>
       </div>
     </div>
 
     <div id="sepBanner" class="hidden mt-3 rounded-lg px-4 py-2 text-sm font-semibold" style="background:linear-gradient(90deg, rgba(240,180,41,.25), rgba(255,43,43,.25)); border:1px solid #f0b429;">
-      🐺 <span style="color:#f0b429;">September — Dustin's birthday month.</span> <span class="text-zinc-200">Sept 11 lights up gold. Cake, loud music, no apologies.</span>
+      🐺 <span style="color:#f0b429;">September — Dustin Founder Day is Sept 11.</span> <span class="text-zinc-200">The whole month celebrates the founder. Cake, loud music, no apologies.</span>
     </div>
 
     <h3 id="calTitle" class="bebas text-3xl mt-4 text-center tracking-wide">—</h3>
@@ -225,21 +241,21 @@
   <div class="max-w-[1800px] mx-auto px-4 py-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="panel-title text-4xl" style="color:var(--cyan);">📅 FAMILY CALENDAR</h2>
-      <div class="flex items-center gap-2">
-        <div class="flex rounded-lg overflow-hidden border border-zinc-700 text-sm font-semibold">
-          <button id="fsViewMonthBtn" onclick="setView('month')" class="px-3 py-1.5 bg-zinc-700">Month</button>
-          <button id="fsViewWeekBtn" onclick="setView('week')" class="px-3 py-1.5">Week</button>
-          <button id="fsViewDayBtn" onclick="setView('day')" class="px-3 py-1.5">Day</button>
+      <div class="cal-tools">
+        <div class="flex rounded-lg overflow-hidden border border-zinc-700 font-semibold shrink-0 max-w-full overflow-x-auto">
+          <button id="fsViewMonthBtn" onclick="setView('month')" class="seg-btn active">Month</button>
+          <button id="fsViewWeekBtn" onclick="setView('week')" class="seg-btn">Week</button>
+          <button id="fsViewDayBtn" onclick="setView('day')" class="seg-btn">Day</button>
         </div>
-        <button onclick="shiftCal(-1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">‹</button>
-        <button onclick="goToday()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Today</button>
-        <button onclick="shiftCal(1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">›</button>
-        <button onclick="openEventModal()" class="px-4 py-1.5 rounded-lg font-bold text-sm text-white" style="background:var(--red);">+ Add Event</button>
-        <button onclick="closeCalFullscreen()" class="px-4 py-1.5 rounded-lg font-bold text-sm text-white" style="background:var(--red);">✕ Close</button>
+        <button onclick="shiftCal(-1)" class="tool-btn">‹</button>
+        <button onclick="goToday()" class="tool-btn">Today</button>
+        <button onclick="shiftCal(1)" class="tool-btn">›</button>
+        <button onclick="openEventModal()" class="tool-btn text-white" style="background:var(--red);">+ Add Event</button>
+        <button onclick="closeCalFullscreen()" class="tool-btn text-white" style="background:var(--red);">✕ Close</button>
       </div>
     </div>
     <div id="fsSepBanner" class="hidden mt-3 rounded-lg px-4 py-2 text-sm font-semibold" style="background:linear-gradient(90deg, rgba(240,180,41,.25), rgba(255,43,43,.25)); border:1px solid #f0b429;">
-      🐺 <span style="color:#f0b429;">September — Dustin's birthday month.</span> <span class="text-zinc-200">Sept 11 lights up gold. Cake, loud music, no apologies.</span>
+      🐺 <span style="color:#f0b429;">September — Dustin Founder Day is Sept 11.</span> <span class="text-zinc-200">The whole month celebrates the founder. Cake, loud music, no apologies.</span>
     </div>
     <h3 id="fsTitle" class="bebas text-4xl mt-4 text-center tracking-wide">—</h3>
     <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs font-semibold text-zinc-300">
@@ -322,7 +338,7 @@ let cursor = new Date();
   if (localStorage.getItem(LS.seeded)) return;
   const y = new Date().getFullYear();
   events = [
-    { id: uid(), title: "🎂 Dustin's Birthday", date: y+'-09-11', time:'', who:'dustin', yearly:true },
+    { id: uid(), title: "👑 Dustin Founder Day — Dustin's Birthday", date: y+'-09-11', time:'', who:'dustin', yearly:true },
     { id: uid(), title: "🎂 Hannah's Birthday", date: y+'-11-17', time:'', who:'hannah', yearly:true },
     { id: uid(), title: '🎂 Harley\'s Birthday', date: y+'-05-30', time:'', who:'harley', yearly:true },
     { id: uid(), title: 'Syllaby demo', date: y+'-11-17', time:'13:00', who:'dustin', yearly:false }
@@ -339,6 +355,15 @@ let cursor = new Date();
   ];
   save(LS.events, events); save(LS.tasks, tasks); save(LS.notes, notes);
   localStorage.setItem(LS.seeded, '1');
+})();
+
+/* Rename the old "Dustin's Birthday" seed to Founder Day on devices that already seeded it */
+(function founderMigration(){
+  let changed = false;
+  for (const e of events){
+    if (e.title === "🎂 Dustin's Birthday"){ e.title = "👑 Dustin Founder Day — Dustin's Birthday"; changed = true; }
+  }
+  if (changed) save(LS.events, events);
 })();
 
 /* Daily recurring household items shown on every day */
@@ -383,6 +408,7 @@ function specialDay(dateObj, evs){
   const y = dateObj.getFullYear(), m = dateObj.getMonth(), d = dateObj.getDate();
   const badges = [];
   if (evs.some(e => /birthday/i.test(e.title))) badges.push({ icon:'🎂', label:'Birthday!', cls:'anim-cake' });
+  if (evs.some(e => /founder/i.test(e.title))) badges.push({ icon:'👑', label:'Founder Day', cls:'anim-founder' });
   const md = pad(m+1) + '-' + pad(d);
   const FIXED = {
     '01-01':['🎆',"New Year's Day",'anim-twinkle'],
@@ -414,13 +440,10 @@ function quickAdd(kind){
 
 /* ================= CALENDAR ================= */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function setSeg(id, on){ const el = $(id); if (el) el.classList.toggle('active', on); }
 function setView(v){ view = v;
-  $('viewMonthBtn').className = 'px-3 py-1.5 ' + (v==='month' ? 'bg-zinc-700' : '');
-  $('viewWeekBtn').className = 'px-3 py-1.5 ' + (v==='week' ? 'bg-zinc-700' : '');
-  $('viewDayBtn').className = 'px-3 py-1.5 ' + (v==='day' ? 'bg-zinc-700' : '');
-  $('fsViewMonthBtn').className = 'px-3 py-1.5 ' + (v==='month' ? 'bg-zinc-700' : '');
-  $('fsViewWeekBtn').className = 'px-3 py-1.5 ' + (v==='week' ? 'bg-zinc-700' : '');
-  $('fsViewDayBtn').className = 'px-3 py-1.5 ' + (v==='day' ? 'bg-zinc-700' : '');
+  setSeg('viewMonthBtn', v==='month'); setSeg('viewWeekBtn', v==='week'); setSeg('viewDayBtn', v==='day');
+  setSeg('fsViewMonthBtn', v==='month'); setSeg('fsViewWeekBtn', v==='week'); setSeg('fsViewDayBtn', v==='day');
   renderCalendar(); }
 function jumpToDay(ds){
   const d = new Date(ds + 'T12:00:00');
@@ -465,6 +488,19 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     /* Big celebration banner: birthdays + holidays get the full treatment, not just a small icon */
     const bdayEvs = dayEvs.filter(e => /birthday/i.test(e.title));
     let bannerHtml = '';
+    /* Dustin Founder Day — the big spectacular one: fireworks, confetti, crown, the works */
+    if (dayEvs.some(e => /founder/i.test(e.title))){
+      bannerHtml += '<div class="founder-hero relative overflow-hidden rounded-xl px-4 py-5 mb-4 text-center">' +
+        '<div style="position:absolute; inset:0; pointer-events:none; overflow:hidden;" aria-hidden="true">' +
+          ['🎉','⭐','🎊','✨','👑','🎈'].map((c,i)=>'<span class="confetti-piece" style="left:'+(6+i*16)+'%; animation-delay:'+(i*0.35)+'s;">'+c+'</span>').join('') +
+        '</div>' +
+        '<div class="relative"><span class="anim-founder" style="font-size:64px; line-height:1;">👑</span></div>' +
+        '<div class="bebas relative leading-none mt-1" style="font-size:52px; color:#f0b429; text-shadow:0 0 30px rgba(240,180,41,.8);">DUSTIN FOUNDER DAY</div>' +
+        '<div class="relative text-base font-bold text-white mt-1">🎂 The man. The myth. The founder. 🐺</div>' +
+        '<div class="relative text-sm text-zinc-200 mt-1">September 11 — Dustin\'s birthday, done the Dustinnope way. Cake, loud music, no apologies.</div>' +
+        '<div class="relative mt-2 text-3xl"><span class="anim-cake">🎂</span> <span class="anim-twinkle">🎆</span> <span class="anim-cake">🎂</span> <span class="anim-twinkle">🎇</span> <span class="anim-cake">🎂</span></div>' +
+      '</div>';
+    }
     if (bdayEvs.length){
       const names = bdayEvs.map(e => { const mm = e.title.match(/([A-Za-z]+)'s\s+[Bb]irthday/); return mm ? mm[1] : null; }).filter(Boolean);
       const whoTxt = names.length ? ', ' + names.join(' & ').toUpperCase() : '';
@@ -545,13 +581,14 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     const ds = dstr(day);
     const isToday = ds === t;
     const isSepBday = day.getMonth() === 8 && day.getDate() === 11;
-    cell.className = 'day-cell rounded-lg bg-zinc-900/60 border border-zinc-800 p-1.5 text-left' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep' : '');
+    cell.className = 'day-cell rounded-lg bg-zinc-900/60 border border-zinc-800 p-1.5 text-left' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep founder-day' : '');
     cell.onclick = () => openEventModal(ds);
     const dayEvs = eventsOn(ds);
     const badges = specialDay(day, dayEvs);
     let html = '<div class="flex justify-between items-start"><span class="text-sm font-bold cursor-pointer hover:text-cyan-300 ' + (isToday ? 'text-cyan-300' : 'text-zinc-200') + '" title="Open day view" onclick="event.stopPropagation(); jumpToDay(\'' + ds + '\')">' + day.getDate() + '</span><span class="flex gap-1">';
     for (const b of badges) html += '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:' + (isFs ? '22px' : '15px') + '">' + b.icon + '</span>';
     html += '</span></div><div class="space-y-1 mt-1">';
+    if (isSepBday) html += '<div class="text-[10px] font-extrabold tracking-wide px-1.5 py-0.5 rounded" style="background:rgba(240,180,41,.25); color:#f0b429;">👑 FOUNDER DAY</div>';
     const maxEv = isFs ? 6 : 4;
     const evs = dayEvs.slice(0, maxEv);
     for (const e of evs){
