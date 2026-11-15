@@ -199,18 +199,25 @@
   <!-- ============ MESSAGE BOARD + PHOTO FRAME ============ -->
   <section class="panel p-5 lg:col-span-2">
     <h2 class="panel-title text-3xl" style="color:var(--cyan);">📌 FAMILY MESSAGE BOARD</h2>
-    <div class="flex gap-2 mt-3">
-      <input id="noteInput" type="text" placeholder="Leave a quick memo for the family…" class="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')addNote()">
-      <select id="noteWho" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none">
+    <div class="flex flex-wrap gap-2 mt-3 items-center">
+      <label class="text-sm font-bold text-zinc-400">To:</label>
+      <select id="noteTo" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none">
+        <option value="family">Family</option>
         <option value="dustin">Dustin</option>
         <option value="hannah">Hannah</option>
         <option value="harley">Harley</option>
-        <option value="family">Family</option>
       </select>
+      <label class="text-sm font-bold text-zinc-400">From:</label>
+      <select id="noteFrom" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none">
+        <option value="dustin">Dustin</option>
+        <option value="hannah">Hannah</option>
+        <option value="harley">Harley</option>
+      </select>
+      <input id="noteInput" type="text" placeholder="Leave a quick memo…" class="flex-1 min-w-[160px] bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')addNote()">
       <button onclick="addNote()" class="px-4 py-2 rounded-lg font-bold text-sm text-white shrink-0" style="background:var(--red);">Stick it</button>
     </div>
     <div id="notesBoard" class="mt-4 flex flex-wrap gap-3"></div>
-    <p class="text-[11px] text-zinc-500 mt-3">Tap the × on a note to take it down. Notes save automatically on this tablet.</p>
+    <p class="text-[11px] text-zinc-500 mt-3">Notes sync across family devices — tap the × on a note to take it down.</p>
   </section>
 
   <!-- Photo frame -->
@@ -360,8 +367,8 @@ let cursor = new Date();
     { id: uid(), text: 'Check the dogs\' water bowls', who:'dogs', done:false }
   ];
   notes = [
-    { id: uid(), text: 'Welcome to the family command center! Tap × to take a note down.', who:'family', color:'#fde047', rot:-2 },
-    { id: uid(), text: 'Hannah\'s birthday is Nov 17 — don\'t forget the cake 🎂', who:'hannah', color:'#67e8f9', rot:1.5 }
+    { id: uid(), text: 'Welcome to the family command center! Tap × to take a note down.', to:'family', from:'bob-doh', color:'#fde047', rot:-2 },
+    { id: uid(), text: 'Hannah\'s birthday is Nov 17 — don\'t forget the cake 🎂', to:'hannah', from:'bob-doh', color:'#67e8f9', rot:1.5 }
   ];
   save(LS.events, events); save(LS.tasks, tasks); save(LS.notes, notes);
   localStorage.setItem(LS.seeded, '1');
@@ -388,6 +395,18 @@ function cleanSeededEvents(list){
   if (r.changed){ events = r.list; save(LS.events, events); }
 })();
 
+/* Notes now carry To + From — migrate old notes (who → to, default from Dustin) */
+function migrateNotes(list){
+  let changed = false;
+  for (const n of list){
+    if (!n.to){ n.to = n.who || 'family'; changed = true; }
+    if (!n.from){ n.from = (n.text && n.text.indexOf('Welcome to the family command center') === 0) ? 'bob-doh' : 'dustin'; changed = true; }
+    if (n.who) delete n.who;
+  }
+  return changed;
+}
+if (migrateNotes(notes)) save(LS.notes, notes);
+
 /* ================= FIREBASE SYNC — free Spark tier, no card, no bill =================
    One shared document holds the family's events, tasks, notes & caption.
    Every change on any device pushes to the cloud; every device listens and
@@ -413,12 +432,13 @@ function applyRemoteState(s){
   if (Array.isArray(s.notes)) notes = s.notes;
   const cleaned = cleanSeededEvents(events);
   if (cleaned.changed) events = cleaned.list;
+  const notesMigrated = migrateNotes(notes);
   if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
   try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
   try { localStorage.setItem(LS.tasks, JSON.stringify(tasks)); } catch(e){}
   try { localStorage.setItem(LS.notes, JSON.stringify(notes)); } catch(e){}
   syncApplying = false;
-  if (cleaned.changed) schedulePush();
+  if (cleaned.changed || notesMigrated) schedulePush();
   renderCalendar(); renderTasks(); renderNotes(); renderPhoto();
 }
 async function pushState(){
@@ -762,11 +782,12 @@ function toggleTask(id){ const t = tasks.find(x => x.id === id); if (t){ t.done 
 function delTask(id){ tasks = tasks.filter(x => x.id !== id); save(LS.tasks, tasks); renderTasks(); }
 
 /* ================= STICKY NOTES ================= */
+function memberLabel(k){ const m = MEMBERS[k]; return m ? m.label : (k ? k.charAt(0).toUpperCase() + k.slice(1) : 'Family'); }
 const NOTE_COLORS = ['#fde047','#67e8f9','#fda4af','#86efac','#f0abfc','#fdba74'];
 function addNote(){
   const text = $('noteInput').value.trim();
   if (!text) return;
-  notes.unshift({ id: uid(), text, who: $('noteWho').value, color: NOTE_COLORS[notes.length % NOTE_COLORS.length], rot: (Math.random()*4-2).toFixed(1) });
+  notes.unshift({ id: uid(), text, to: $('noteTo').value, from: $('noteFrom').value, color: NOTE_COLORS[notes.length % NOTE_COLORS.length], rot: (Math.random()*4-2).toFixed(1) });
   $('noteInput').value = '';
   save(LS.notes, notes); renderNotes();
 }
@@ -774,15 +795,14 @@ function renderNotes(){
   const board = $('notesBoard'); board.innerHTML = '';
   if (!notes.length){ board.innerHTML = '<p class="text-zinc-500 text-sm">No notes yet — stick the first one up!</p>'; return; }
   for (const n of notes){
-    const m = MEMBERS[n.who] || MEMBERS.family;
     const div = document.createElement('div');
-    div.className = 'note relative rounded-md p-3 pt-6 w-[180px] min-h-[120px] text-zinc-900 text-sm font-medium';
+    div.className = 'note relative rounded-md p-3 w-[180px] min-h-[120px] text-zinc-900 text-sm font-medium';
     div.style.background = n.color;
     div.style.transform = 'rotate(' + n.rot + 'deg)';
     div.innerHTML =
       '<button onclick="delNote(\'' + n.id + '\')" class="absolute top-1 right-2 font-bold text-zinc-700 hover:text-red-600" title="Take down">×</button>' +
-      '<span class="absolute top-1.5 left-2 text-[10px] font-bold uppercase tracking-wide text-zinc-600">' + m.label + '</span>' +
-      '<span>' + n.text.replace(/</g,'&lt;') + '</span>';
+      '<div class="text-[10px] font-bold uppercase tracking-wide text-zinc-600 leading-tight pr-4">To: ' + memberLabel(n.to) + '<br>From: ' + memberLabel(n.from) + '</div>' +
+      '<div class="mt-1.5">' + (n.text || '').replace(/</g,'&lt;') + '</div>';
     board.appendChild(div);
   }
 }
