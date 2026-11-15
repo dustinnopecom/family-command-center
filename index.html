@@ -29,6 +29,17 @@
   .fs-grid .day-cell { min-height:150px; }
   .fs-grid .evt-pill { font-size:13px; padding:4px 8px; }
   .fs-grid .day-cell .text-sm.font-bold { font-size:1.15rem; }
+  /* Special-day animations */
+  @keyframes cake-bob { 0%,100%{ transform:translateY(0) rotate(-4deg); } 50%{ transform:translateY(-4px) rotate(4deg); } }
+  @keyframes twinkle { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.55; transform:scale(.8) rotate(12deg); } }
+  @keyframes wiggle { 0%,100%{ transform:rotate(-8deg); } 50%{ transform:rotate(8deg); } }
+  @keyframes float-up { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+  @keyframes pop-in { 0%{ transform:scale(.6); } 60%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
+  .anim-badge { display:inline-block; line-height:1; animation:pop-in .4s ease; }
+  .anim-cake { animation:cake-bob 1.6s ease-in-out infinite; filter:drop-shadow(0 0 6px rgba(240,180,41,.7)); }
+  .anim-twinkle { animation:twinkle 1.4s ease-in-out infinite; }
+  .anim-wiggle { animation:wiggle 1.2s ease-in-out infinite; }
+  .anim-float { animation:float-up 1.8s ease-in-out infinite; }
   .evt-pill { display:flex; align-items:center; gap:4px; font-size:11px; line-height:1.25; padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.07); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   .evt-pill:hover { background:rgba(255,255,255,.14); }
   .dot { width:8px; height:8px; border-radius:9999px; flex-shrink:0; }
@@ -74,6 +85,17 @@
 </div>
 
 <main class="max-w-[1600px] mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+  <!-- ============ QUICK ADD (easy for Hannah) ============ -->
+  <section class="panel p-4 lg:col-span-3 flex flex-wrap items-center gap-3">
+    <h2 class="panel-title text-2xl" style="color:var(--cyan);">⚡ QUICK ADD</h2>
+    <span class="text-zinc-400 text-sm">One tap, fill in the blanks, done — no hunting around.</span>
+    <div class="flex flex-wrap gap-2 ml-auto">
+      <button onclick="quickAdd('event')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:var(--red);">📅 Add Event</button>
+      <button onclick="quickAdd('task')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#0e7490;">✅ Add Task</button>
+      <button onclick="quickAdd('note')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#6d28d9;">📌 Add Note</button>
+    </div>
+  </section>
 
   <!-- ============ CALENDAR ============ -->
   <section class="panel p-5 lg:col-span-2">
@@ -330,6 +352,59 @@ function eventsOn(dateStr){
   return out;
 }
 
+/* ---- Special days: birthdays + holidays get animated badges ---- */
+function easterSunday(y){
+  const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4,
+    f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4,
+    l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451),
+    month=Math.floor((h+l-7*m+114)/31), day=((h+l-7*m+114)%31)+1;
+  return new Date(y, month-1, day);
+}
+function nthWeekday(y, m, weekday, n){
+  const d = new Date(y, m, 1);
+  let count = 0;
+  while (d.getMonth() === m){ if (d.getDay() === weekday){ count++; if (count === n) return new Date(d); } d.setDate(d.getDate()+1); }
+  return null;
+}
+function lastWeekday(y, m, weekday){
+  const d = new Date(y, m+1, 0);
+  while (d.getDay() !== weekday) d.setDate(d.getDate()-1);
+  return d;
+}
+function specialDay(dateObj, evs){
+  const y = dateObj.getFullYear(), m = dateObj.getMonth(), d = dateObj.getDate();
+  const badges = [];
+  if (evs.some(e => /birthday/i.test(e.title))) badges.push({ icon:'🎂', label:'Birthday!', cls:'anim-cake' });
+  const md = pad(m+1) + '-' + pad(d);
+  const FIXED = {
+    '01-01':['🎆',"New Year's Day",'anim-twinkle'],
+    '02-14':['❤️',"Valentine's Day",'anim-wiggle'],
+    '03-17':['🍀',"St. Patrick's Day",'anim-wiggle'],
+    '04-01':['🤡','April Fools','anim-wiggle'],
+    '07-04':['🎆','Independence Day','anim-twinkle'],
+    '10-31':['🎃','Halloween','anim-wiggle'],
+    '11-11':['🎖️','Veterans Day','anim-float'],
+    '12-25':['🎄','Christmas Day','anim-twinkle'],
+    '12-31':['🎆',"New Year's Eve",'anim-twinkle']
+  };
+  if (FIXED[md]) badges.push({ icon:FIXED[md][0], label:FIXED[md][1], cls:FIXED[md][2] });
+  const sameDay = x => x && x.getFullYear()===y && x.getMonth()===m && x.getDate()===d;
+  if (sameDay(easterSunday(y))) badges.push({ icon:'🐰', label:'Easter', cls:'anim-float' });
+  if (sameDay(nthWeekday(y,0,1,3))) badges.push({ icon:'✊', label:'MLK Day', cls:'anim-float' });
+  if (sameDay(nthWeekday(y,4,0,2))) badges.push({ icon:'💐', label:"Mother's Day", cls:'anim-float' });
+  if (sameDay(lastWeekday(y,4,1))) badges.push({ icon:'🇺🇸', label:'Memorial Day', cls:'anim-float' });
+  if (sameDay(nthWeekday(y,5,0,3))) badges.push({ icon:'👔', label:"Father's Day", cls:'anim-float' });
+  if (sameDay(nthWeekday(y,8,1,1))) badges.push({ icon:'💼', label:'Labor Day', cls:'anim-float' });
+  if (sameDay(nthWeekday(y,10,4,4))) badges.push({ icon:'🦃', label:'Thanksgiving', cls:'anim-wiggle' });
+  return badges;
+}
+function quickAdd(kind){
+  if (kind === 'event'){ openEventModal(); return; }
+  if (kind === 'task'){ $('taskInput').scrollIntoView({ behavior:'smooth', block:'center' }); setTimeout(() => $('taskInput').focus(), 400); return; }
+  if (kind === 'note'){ $('noteInput').scrollIntoView({ behavior:'smooth', block:'center' }); setTimeout(() => $('noteInput').focus(), 400); return; }
+}
+
 /* ================= CALENDAR ================= */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function setView(v){ view = v;
@@ -378,17 +453,19 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     const isSepBday = day.getMonth() === 8 && day.getDate() === 11;
     cell.className = 'day-cell rounded-lg bg-zinc-900/60 border border-zinc-800 p-1.5 text-left' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep' : '');
     cell.onclick = () => openEventModal(ds);
-    let html = '<div class="flex justify-between items-start"><span class="text-sm font-bold ' + (isToday ? 'text-cyan-300' : 'text-zinc-200') + '">' + day.getDate() + '</span>';
-    if (isSepBday) html += '<span title="Dustin\'s birthday!" class="text-sm">🎂</span>';
-    html += '</div><div class="space-y-1 mt-1">';
+    const dayEvs = eventsOn(ds);
+    const badges = specialDay(day, dayEvs);
+    let html = '<div class="flex justify-between items-start"><span class="text-sm font-bold ' + (isToday ? 'text-cyan-300' : 'text-zinc-200') + '">' + day.getDate() + '</span><span class="flex gap-1">';
+    for (const b of badges) html += '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:' + (isFs ? '22px' : '15px') + '">' + b.icon + '</span>';
+    html += '</span></div><div class="space-y-1 mt-1">';
     const maxEv = isFs ? 6 : 4;
-    const evs = eventsOn(ds).slice(0, maxEv);
+    const evs = dayEvs.slice(0, maxEv);
     for (const e of evs){
       const m = MEMBERS[e.who] || MEMBERS.family;
       const label = (e.time ? e.time.replace(/^0/,'').replace(':00 ',' ') + ' ' : '') + e.title;
       html += '<div class="evt-pill" data-eid="' + e.id + '" title="Tap to delete: ' + e.title.replace(/"/g,'') + '"><span class="dot" style="background:' + m.color + '"></span><span class="truncate">' + label + '</span></div>';
     }
-    if (eventsOn(ds).length > maxEv) html += '<div class="text-[10px] text-zinc-500 pl-1">+' + (eventsOn(ds).length - maxEv) + ' more</div>';
+    if (dayEvs.length > maxEv) html += '<div class="text-[10px] text-zinc-500 pl-1">+' + (dayEvs.length - maxEv) + ' more</div>';
     html += '</div>';
     cell.innerHTML = html;
     grid.appendChild(cell);
