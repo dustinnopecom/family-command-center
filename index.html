@@ -105,6 +105,7 @@
         <div class="flex rounded-lg overflow-hidden border border-zinc-700 text-sm font-semibold">
           <button id="viewMonthBtn" onclick="setView('month')" class="px-3 py-1.5 bg-zinc-700">Month</button>
           <button id="viewWeekBtn" onclick="setView('week')" class="px-3 py-1.5">Week</button>
+          <button id="viewDayBtn" onclick="setView('day')" class="px-3 py-1.5">Day</button>
         </div>
         <button onclick="shiftCal(-1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">‹</button>
         <button onclick="goToday()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Today</button>
@@ -129,10 +130,11 @@
       <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap an event to delete it</span>
     </div>
 
-    <div class="grid grid-cols-7 gap-1.5 mt-3 text-center text-xs font-bold text-zinc-400">
+    <div id="calWeekdayHeader" class="grid grid-cols-7 gap-1.5 mt-3 text-center text-xs font-bold text-zinc-400">
       <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
     </div>
     <div id="calGrid" class="grid grid-cols-7 gap-1.5 mt-1"></div>
+    <div id="calAgenda" class="mt-3"></div>
   </section>
 
   <!-- ============ RIGHT COLUMN: WEATHER + TASKS ============ -->
@@ -224,6 +226,7 @@
         <div class="flex rounded-lg overflow-hidden border border-zinc-700 text-sm font-semibold">
           <button id="fsViewMonthBtn" onclick="setView('month')" class="px-3 py-1.5 bg-zinc-700">Month</button>
           <button id="fsViewWeekBtn" onclick="setView('week')" class="px-3 py-1.5">Week</button>
+          <button id="fsViewDayBtn" onclick="setView('day')" class="px-3 py-1.5">Day</button>
         </div>
         <button onclick="shiftCal(-1)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-bold">‹</button>
         <button onclick="goToday()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Today</button>
@@ -244,10 +247,11 @@
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#e5e5e5"></span>Whole Family</span>
       <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap an event to delete it • Press Esc or ✕ Close to go back</span>
     </div>
-    <div class="grid grid-cols-7 gap-1.5 mt-3 text-center text-sm font-bold text-zinc-400">
+    <div id="fsWeekdayHeader" class="grid grid-cols-7 gap-1.5 mt-3 text-center text-sm font-bold text-zinc-400">
       <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
     </div>
     <div id="fsGrid" class="fs-grid grid grid-cols-7 gap-1.5 mt-1"></div>
+    <div id="fsAgenda" class="mt-4"></div>
   </div>
 </div>
 
@@ -308,7 +312,7 @@ let tasks  = load(LS.tasks, []);
 let notes  = load(LS.notes, []);
 let taskFilter = 'all';
 let view = 'month';
-let cursor = new Date(); cursor.setDate(1);
+let cursor = new Date();
 
 /* ---- Seed starter data once ---- */
 (function seed(){
@@ -410,16 +414,19 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 function setView(v){ view = v;
   $('viewMonthBtn').className = 'px-3 py-1.5 ' + (v==='month' ? 'bg-zinc-700' : '');
   $('viewWeekBtn').className = 'px-3 py-1.5 ' + (v==='week' ? 'bg-zinc-700' : '');
+  $('viewDayBtn').className = 'px-3 py-1.5 ' + (v==='day' ? 'bg-zinc-700' : '');
   $('fsViewMonthBtn').className = 'px-3 py-1.5 ' + (v==='month' ? 'bg-zinc-700' : '');
   $('fsViewWeekBtn').className = 'px-3 py-1.5 ' + (v==='week' ? 'bg-zinc-700' : '');
+  $('fsViewDayBtn').className = 'px-3 py-1.5 ' + (v==='day' ? 'bg-zinc-700' : '');
   renderCalendar(); }
 function openCalFullscreen(){ $('calFullscreen').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderCalendar(); window.scrollTo(0,0); }
 function closeCalFullscreen(){ $('calFullscreen').classList.add('hidden'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeCalFullscreen(); closeEventModal(); } });
-function goToday(){ cursor = new Date(); cursor.setDate(1); renderCalendar(); }
+function goToday(){ cursor = new Date(); renderCalendar(); }
 function shiftCal(dir){
   if (view === 'month') cursor.setMonth(cursor.getMonth() + dir);
-  else cursor.setDate(cursor.getDate() + dir * 7);
+  else if (view === 'week') cursor.setDate(cursor.getDate() + dir * 7);
+  else cursor.setDate(cursor.getDate() + dir);
   renderCalendar();
 }
 function renderCalendar(){
@@ -429,8 +436,68 @@ function renderCalendar(){
 }
 function renderCalInto(grid, titleEl, sepEl, isFs){
   grid.innerHTML = '';
+  const headerEl = $(isFs ? 'fsWeekdayHeader' : 'calWeekdayHeader');
+  const agendaEl = $(isFs ? 'fsAgenda' : 'calAgenda');
+  agendaEl.innerHTML = '';
+  grid.className = (isFs ? 'fs-grid ' : '') + (view === 'day' ? 'grid grid-cols-1 gap-2 mt-1' : 'grid grid-cols-7 gap-1.5 mt-1');
+  headerEl.style.display = view === 'day' ? 'none' : '';
   const isSep = cursor.getMonth() === 8;
   sepEl.classList.toggle('hidden', !isSep);
+
+  /* ---------- DAY VIEW: one day, big, everything happening that day ---------- */
+  if (view === 'day'){
+    const day = new Date(cursor);
+    const ds = dstr(day);
+    const WD = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    titleEl.textContent = WD[day.getDay()] + ', ' + MONTHS[day.getMonth()] + ' ' + day.getDate() + ', ' + day.getFullYear();
+    const dayEvs = eventsOn(ds);
+    const badges = specialDay(day, dayEvs);
+    const isToday = ds === todayStr();
+    const isSepBday = day.getMonth() === 8 && day.getDate() === 11;
+    let html = '<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep' : '') + '">' +
+      '<div class="flex flex-wrap items-center gap-3 justify-between">' +
+        '<div class="flex items-center gap-4">' +
+          '<span class="bebas leading-none ' + (isToday ? 'text-cyan-300' : 'text-zinc-100') + '" style="font-size:64px;">' + day.getDate() + '</span>' +
+          '<span class="flex gap-2">' + badges.map(b => '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:34px">' + b.icon + '</span>').join('') + '</span>' +
+          (isToday ? '<span class="px-3 py-1 rounded-full text-xs font-bold text-white" style="background:var(--red);">TODAY</span>' : '') +
+        '</div>' +
+        '<button onclick="openEventModal(\'' + ds + '\')" class="px-4 py-2 rounded-lg font-bold text-sm text-white" style="background:var(--red);">+ Add something this day</button>' +
+      '</div>' +
+      '<div class="mt-4 space-y-2">';
+    const dated = dayEvs.filter(e => !e.daily);
+    const daily = dayEvs.filter(e => e.daily);
+    if (!dated.length && !daily.length) html += '<p class="text-zinc-400">Nothing scheduled this day.</p>';
+    for (const e of dated){
+      const m = MEMBERS[e.who] || MEMBERS.family;
+      html += '<div class="day-evt flex items-center gap-3 bg-zinc-800/70 hover:bg-zinc-800 rounded-lg px-4 py-3 cursor-pointer" data-eid="' + e.id + '" title="Tap to delete: ' + e.title.replace(/"/g,'') + '">' +
+        '<span class="dot" style="background:' + m.color + '; width:12px; height:12px;"></span>' +
+        (e.time ? '<span class="font-bold text-cyan-300 whitespace-nowrap">' + e.time.replace(/^0/,'') + '</span>' : '<span class="font-bold text-zinc-500 whitespace-nowrap">All day</span>') +
+        '<span class="flex-1 text-base">' + e.title + '</span>' +
+        '<span class="text-xs font-semibold text-zinc-400">' + m.label + '</span></div>';
+    }
+    if (daily.length){
+      html += '<div class="text-xs font-bold tracking-wide text-zinc-500 mt-3">EVERY DAY</div>';
+      for (const e of daily){
+        const m = MEMBERS[e.who] || MEMBERS.family;
+        html += '<div class="flex items-center gap-3 bg-zinc-900/60 rounded-lg px-4 py-2.5">' +
+          '<span class="dot" style="background:' + m.color + '; width:12px; height:12px;"></span>' +
+          (e.time ? '<span class="font-bold text-zinc-400 whitespace-nowrap">' + e.time + '</span>' : '') +
+          '<span class="flex-1">' + e.title + '</span>' +
+          '<span class="text-xs font-semibold text-zinc-500">' + m.label + '</span></div>';
+      }
+    }
+    html += '</div></div>';
+    grid.innerHTML = html;
+    grid.querySelectorAll('.day-evt').forEach(row => {
+      row.addEventListener('click', () => {
+        const id = row.getAttribute('data-eid');
+        const e = events.find(x => x.id === id);
+        if (e && confirm('Delete event "' + e.title + '"?')) { events = events.filter(x => x.id !== id); save(LS.events, events); renderCalendar(); }
+      });
+    });
+    return;
+  }
+
   let days = [];
   if (view === 'month'){
     titleEl.textContent = MONTHS[cursor.getMonth()] + ' ' + cursor.getFullYear();
@@ -469,6 +536,34 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     html += '</div>';
     cell.innerHTML = html;
     grid.appendChild(cell);
+  }
+  /* ---------- WEEK AGENDA: everything happening that week, listed out ---------- */
+  if (view === 'week'){
+    const WD3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let ahtml = '<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">' +
+      '<div class="panel-title text-2xl" style="color:var(--cyan);">📋 THIS WEEK — EVERYTHING HAPPENING</div>' +
+      '<div class="flex flex-wrap items-center gap-2 mt-2 text-sm text-zinc-300"><span class="font-bold text-zinc-500">EVERY DAY:</span>' +
+      DAILY.map(r => '<span class="bg-zinc-800 rounded-full px-3 py-1">' + r.title + (r.time ? ' • ' + r.time : '') + '</span>').join('') + '</div>' +
+      '<div class="mt-3 space-y-2">';
+    let anyDated = false;
+    for (const day of days){
+      if (!day) continue;
+      const ds = dstr(day);
+      const dated = eventsOn(ds).filter(e => !e.daily);
+      if (!dated.length) continue;
+      anyDated = true;
+      ahtml += '<div class="flex flex-wrap items-start gap-2"><span class="w-28 shrink-0 font-bold text-sm pt-1">' + WD3[day.getDay()] + ' ' + MONTHS[day.getMonth()].slice(0,3) + ' ' + day.getDate() + '</span><span class="flex-1 space-y-1">';
+      for (const e of dated){
+        const m = MEMBERS[e.who] || MEMBERS.family;
+        ahtml += '<div class="flex items-center gap-2 text-sm"><span class="dot" style="background:' + m.color + '"></span>' +
+          (e.time ? '<span class="font-bold text-cyan-300">' + e.time.replace(/^0/,'') + '</span>' : '<span class="font-bold text-zinc-500">All day</span>') +
+          '<span>' + e.title + '</span><span class="text-xs text-zinc-500">(' + m.label + ')</span></div>';
+      }
+      ahtml += '</span></div>';
+    }
+    if (!anyDated) ahtml += '<p class="text-zinc-400 text-sm">No special events this week — just the daily routine above.</p>';
+    ahtml += '</div></div>';
+    agendaEl.innerHTML = ahtml;
   }
   grid.querySelectorAll('.evt-pill').forEach(p => {
     p.addEventListener('click', ev => {
