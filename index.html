@@ -37,6 +37,9 @@
   @keyframes pop-in { 0%{ transform:scale(.6); } 60%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
   .anim-badge { display:inline-block; line-height:1; animation:pop-in .4s ease; }
   .anim-cake { animation:cake-bob 1.6s ease-in-out infinite; filter:drop-shadow(0 0 6px rgba(240,180,41,.7)); }
+  @keyframes banner-glow { 0%,100%{ box-shadow:0 0 18px rgba(240,180,41,.25); } 50%{ box-shadow:0 0 36px rgba(240,180,41,.55); } }
+  .celebrate-banner { background:linear-gradient(90deg, rgba(240,180,41,.28), rgba(255,43,43,.28)); border:2px solid #f0b429; animation:banner-glow 2.4s ease-in-out infinite; }
+  .celebrate-holiday { background:linear-gradient(90deg, rgba(37,208,232,.18), rgba(167,139,250,.22)); border:2px solid #25d0e8; box-shadow:0 0 24px rgba(37,208,232,.20); }
   .anim-twinkle { animation:twinkle 1.4s ease-in-out infinite; }
   .anim-wiggle { animation:wiggle 1.2s ease-in-out infinite; }
   .anim-float { animation:float-up 1.8s ease-in-out infinite; }
@@ -127,7 +130,7 @@
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#a78bfa"></span>Harley</span>
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#4ade80"></span>Play-Doh • Cookie-Doh • Astro-Doh</span>
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#e5e5e5"></span>Whole Family</span>
-      <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap an event to delete it</span>
+      <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap a date number to open that day • Tap an event to delete it</span>
     </div>
 
     <div id="calWeekdayHeader" class="grid grid-cols-7 gap-1.5 mt-3 text-center text-xs font-bold text-zinc-400">
@@ -245,7 +248,7 @@
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#a78bfa"></span>Harley</span>
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#4ade80"></span>Play-Doh • Cookie-Doh • Astro-Doh</span>
       <span class="flex items-center gap-1.5"><span class="dot" style="background:#e5e5e5"></span>Whole Family</span>
-      <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap an event to delete it • Press Esc or ✕ Close to go back</span>
+      <span class="ml-auto text-zinc-500 font-normal">Tap a day to add an event • Tap a date number to open that day • Tap an event to delete it • Press Esc or ✕ Close to go back</span>
     </div>
     <div id="fsWeekdayHeader" class="grid grid-cols-7 gap-1.5 mt-3 text-center text-sm font-bold text-zinc-400">
       <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
@@ -419,6 +422,11 @@ function setView(v){ view = v;
   $('fsViewWeekBtn').className = 'px-3 py-1.5 ' + (v==='week' ? 'bg-zinc-700' : '');
   $('fsViewDayBtn').className = 'px-3 py-1.5 ' + (v==='day' ? 'bg-zinc-700' : '');
   renderCalendar(); }
+function jumpToDay(ds){
+  const d = new Date(ds + 'T12:00:00');
+  cursor = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  setView('day');
+}
 function openCalFullscreen(){ $('calFullscreen').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderCalendar(); window.scrollTo(0,0); }
 function closeCalFullscreen(){ $('calFullscreen').classList.add('hidden'); document.body.style.overflow = ''; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeCalFullscreen(); closeEventModal(); } });
@@ -454,7 +462,26 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     const badges = specialDay(day, dayEvs);
     const isToday = ds === todayStr();
     const isSepBday = day.getMonth() === 8 && day.getDate() === 11;
+    /* Big celebration banner: birthdays + holidays get the full treatment, not just a small icon */
+    const bdayEvs = dayEvs.filter(e => /birthday/i.test(e.title));
+    let bannerHtml = '';
+    if (bdayEvs.length){
+      const names = bdayEvs.map(e => { const mm = e.title.match(/([A-Za-z]+)'s\s+[Bb]irthday/); return mm ? mm[1] : null; }).filter(Boolean);
+      const whoTxt = names.length ? ', ' + names.join(' & ').toUpperCase() : '';
+      bannerHtml += '<div class="celebrate-banner rounded-xl px-4 py-3 mb-4 flex items-center justify-center gap-4 text-center">' +
+        '<span class="anim-cake" style="font-size:56px; line-height:1;">🎂</span>' +
+        '<span><span class="bebas block leading-none" style="font-size:34px; color:#f0b429;">HAPPY BIRTHDAY' + whoTxt + '!</span>' +
+        '<span class="text-sm text-zinc-200">' + bdayEvs.map(e => e.title).join(' • ') + '</span></span>' +
+        '<span class="anim-cake" style="font-size:56px; line-height:1;">🎂</span></div>';
+    }
+    for (const b of badges.filter(x => x.label !== 'Birthday!')){
+      bannerHtml += '<div class="celebrate-holiday rounded-xl px-4 py-3 mb-4 flex items-center justify-center gap-4 text-center">' +
+        '<span class="' + b.cls + '" style="font-size:52px; line-height:1;">' + b.icon + '</span>' +
+        '<span class="bebas leading-none" style="font-size:32px;">' + b.label.toUpperCase() + '</span>' +
+        '<span class="' + b.cls + '" style="font-size:52px; line-height:1;">' + b.icon + '</span></div>';
+    }
     let html = '<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep' : '') + '">' +
+      bannerHtml +
       '<div class="flex flex-wrap items-center gap-3 justify-between">' +
         '<div class="flex items-center gap-4">' +
           '<span class="bebas leading-none ' + (isToday ? 'text-cyan-300' : 'text-zinc-100') + '" style="font-size:64px;">' + day.getDate() + '</span>' +
@@ -522,7 +549,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     cell.onclick = () => openEventModal(ds);
     const dayEvs = eventsOn(ds);
     const badges = specialDay(day, dayEvs);
-    let html = '<div class="flex justify-between items-start"><span class="text-sm font-bold ' + (isToday ? 'text-cyan-300' : 'text-zinc-200') + '">' + day.getDate() + '</span><span class="flex gap-1">';
+    let html = '<div class="flex justify-between items-start"><span class="text-sm font-bold cursor-pointer hover:text-cyan-300 ' + (isToday ? 'text-cyan-300' : 'text-zinc-200') + '" title="Open day view" onclick="event.stopPropagation(); jumpToDay(\'' + ds + '\')">' + day.getDate() + '</span><span class="flex gap-1">';
     for (const b of badges) html += '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:' + (isFs ? '22px' : '15px') + '">' + b.icon + '</span>';
     html += '</span></div><div class="space-y-1 mt-1">';
     const maxEv = isFs ? 6 : 4;
@@ -552,7 +579,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
       const dated = eventsOn(ds).filter(e => !e.daily);
       if (!dated.length) continue;
       anyDated = true;
-      ahtml += '<div class="flex flex-wrap items-start gap-2"><span class="w-28 shrink-0 font-bold text-sm pt-1">' + WD3[day.getDay()] + ' ' + MONTHS[day.getMonth()].slice(0,3) + ' ' + day.getDate() + '</span><span class="flex-1 space-y-1">';
+      ahtml += '<div class="flex flex-wrap items-start gap-2"><span class="w-28 shrink-0 font-bold text-sm pt-1 cursor-pointer hover:text-cyan-300" title="Open day view" onclick="jumpToDay(\'' + ds + '\')">' + WD3[day.getDay()] + ' ' + MONTHS[day.getMonth()].slice(0,3) + ' ' + day.getDate() + '</span><span class="flex-1 space-y-1">';
       for (const e of dated){
         const m = MEMBERS[e.who] || MEMBERS.family;
         ahtml += '<div class="flex items-center gap-2 text-sm"><span class="dot" style="background:' + m.color + '"></span>' +
