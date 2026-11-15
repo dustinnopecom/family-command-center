@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gatlin Family Command Center — Dustinnope</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -85,6 +88,7 @@
       <div id="clock" class="bebas text-4xl leading-none" style="color:var(--cyan);">--:--</div>
       <div id="dateLine" class="text-zinc-400 text-sm mt-1">Loading date…</div>
       <div id="weatherMini" class="text-zinc-300 text-sm mt-1">Checking Lockport weather…</div>
+      <div id="syncStatus" class="text-zinc-500 text-xs mt-1">Connecting to family sync…</div>
     </div>
   </div>
 </header>
@@ -233,7 +237,7 @@
 </main>
 
 <footer class="max-w-[1600px] mx-auto px-4 pb-6 text-center text-xs text-zinc-500">
-  Gatlin Family Command Center • Built with love for the Lockport household • Shadow Wolf 🐺 Night Watch • Data lives in this tablet's browser — clearing browser data erases saved events, tasks &amp; notes.
+  Gatlin Family Command Center • Built with love for the Lockport household • Shadow Wolf 🐺 Night Watch • <span id="syncFoot">Events, tasks &amp; notes sync across family devices.</span> Photos stay on the device that added them.
 </footer>
 
 <!-- ============ FULLSCREEN CALENDAR ============ -->
@@ -324,7 +328,14 @@ const pad = n => String(n).padStart(2,'0');
 const dstr = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
 const todayStr = () => dstr(new Date());
 function load(key, fallback){ try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch(e){ return fallback; } }
-function save(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ console.warn('save failed', key, e); } }
+/* ---- Family sync state (Firebase) ---- */
+let syncReady = false, syncDoc = null, syncTimer = null, syncApplying = false, lastPushedJson = '';
+function schedulePush(){
+  if (!syncReady || !syncDoc || syncApplying) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushState, 600);
+}
+function save(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ console.warn('save failed', key, e); } schedulePush(); }
 
 let events = load(LS.events, []);
 let tasks  = load(LS.tasks, []);
@@ -364,6 +375,67 @@ let cursor = new Date();
     if (e.title === "🎂 Dustin's Birthday"){ e.title = "👑 Dustin Founder Day — Dustin's Birthday"; changed = true; }
   }
   if (changed) save(LS.events, events);
+})();
+
+/* ================= FIREBASE SYNC — free Spark tier, no card, no bill =================
+   One shared document holds the family's events, tasks, notes & caption.
+   Every change on any device pushes to the cloud; every device listens and
+   updates live. Local storage stays as the offline cache/fallback, and the
+   photo frame stays local-only (photos can exceed Firestore's 1 MB doc limit). */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBwYDIS0okZ3trsf_jANsb3k3zuIgk1OzA",
+  authDomain: "gatlin-family-command-center.firebaseapp.com",
+  projectId: "gatlin-family-command-center",
+  storageBucket: "gatlin-family-command-center.firebasestorage.app",
+  messagingSenderId: "820413309064",
+  appId: "1:820413309064:web:bc3507cbf090602637ff3d"
+};
+function stateJson(){ return JSON.stringify({ events, tasks, notes, caption: localStorage.getItem(LS.caption) || '' }); }
+function setSyncStatus(msg){ const el = $('syncStatus'); if (el) el.textContent = msg; }
+function applyRemoteState(s){
+  if (!s) return;
+  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], caption: s.caption || '' });
+  if (incoming === stateJson()) return; /* already in sync — no re-render, no echo write */
+  syncApplying = true;
+  if (Array.isArray(s.events)) events = s.events;
+  if (Array.isArray(s.tasks)) tasks = s.tasks;
+  if (Array.isArray(s.notes)) notes = s.notes;
+  if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
+  try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
+  try { localStorage.setItem(LS.tasks, JSON.stringify(tasks)); } catch(e){}
+  try { localStorage.setItem(LS.notes, JSON.stringify(notes)); } catch(e){}
+  syncApplying = false;
+  renderCalendar(); renderTasks(); renderNotes(); renderPhoto();
+}
+async function pushState(){
+  if (!syncReady || !syncDoc) return;
+  const j = stateJson();
+  if (j === lastPushedJson) return; /* nothing new to send */
+  lastPushedJson = j;
+  try {
+    await syncDoc.set({ events, tasks, notes, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+  } catch(e){ console.warn('sync push failed', e); }
+}
+(function initSync(){
+  try {
+    if (typeof firebase === 'undefined'){ setSyncStatus('Offline — saving on this device only'); return; }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.firestore();
+    if (db.enablePersistence) db.enablePersistence({ synchronizeTabs:true }).catch(function(){});
+    firebase.auth().signInAnonymously().then(function(){
+      syncDoc = db.collection('family').doc('state');
+      syncDoc.onSnapshot(function(snap){
+        if (!snap.exists){
+          /* First device here: push whatever this device already has (seed or local edits) */
+          syncReady = true; setSyncStatus('Synced ✓ — changes appear on all family devices');
+          pushState();
+          return;
+        }
+        applyRemoteState(snap.data());
+        if (!syncReady){ syncReady = true; setSyncStatus('Synced ✓ — changes appear on all family devices'); }
+      }, function(err){ console.warn('sync listen failed', err); setSyncStatus('Offline — saving on this device only'); });
+    }).catch(function(err){ console.warn('sync sign-in failed', err); setSyncStatus('Offline — saving on this device only'); });
+  } catch(e){ console.warn('sync init failed', e); setSyncStatus('Offline — saving on this device only'); }
 })();
 
 /* Daily recurring household items shown on every day */
