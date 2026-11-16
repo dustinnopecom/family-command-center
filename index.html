@@ -401,6 +401,8 @@ function migrateNotes(list){
   for (const n of list){
     if (!n.to){ n.to = n.who || 'family'; changed = true; }
     if (!n.from){ n.from = (n.text && n.text.indexOf('Welcome to the family command center') === 0) ? 'bob-doh' : 'dustin'; changed = true; }
+    /* The seeded cake note was written by Bob-Doh — correct it if an earlier migration stamped it Dustin */
+    if (n.text === 'Hannah\'s birthday is Nov 17 — don\'t forget the cake 🎂' && n.from === 'dustin'){ n.from = 'bob-doh'; changed = true; }
     if (n.who) delete n.who;
   }
   return changed;
