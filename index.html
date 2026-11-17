@@ -358,7 +358,11 @@ let cursor = new Date();
   events = [
     { id: uid(), title: "👑 Dustin Founder Day — Dustin's Birthday", date: y+'-09-11', time:'', who:'dustin', yearly:true },
     { id: uid(), title: "🎂 Hannah's Birthday", date: y+'-11-17', time:'', who:'hannah', yearly:true },
-    { id: uid(), title: '🎂 Harley\'s Birthday', date: y+'-05-30', time:'', who:'harley', yearly:true }
+    { id: uid(), title: '🎂 Harley\'s Birthday', date: y+'-05-30', time:'', who:'harley', yearly:true },
+    { id: uid(), title: "🎂 Play-Doh's Birthday", date: y+'-09-07', time:'', who:'dogs', yearly:true },
+    { id: uid(), title: "🎂 Cookie-Doh's Birthday", date: y+'-04-25', time:'', who:'dogs', yearly:true },
+    { id: uid(), title: "🎂 Astro-Doh's Birthday", date: y+'-02-11', time:'', who:'dogs', yearly:true },
+    { id: uid(), title: "💕 Dustin & Hannah — Dating Anniversary", date: y+'-10-12', time:'', who:'family', yearly:true }
   ];
   tasks = [
     { id: uid(), text: 'Feed the pond fish (GloFish & minnows)', who:'family', done:false },
@@ -381,6 +385,28 @@ let cursor = new Date();
     if (e.title === "🎂 Dustin's Birthday"){ e.title = "👑 Dustin Founder Day — Dustin's Birthday"; changed = true; }
   }
   if (changed) save(LS.events, events);
+})();
+
+/* Add the dogs' birthdays + Dustin & Hannah's dating anniversary (Oct 12, 2025) if missing.
+   Runs at load AND on every remote apply, so devices that already seeded still get them. */
+function addMissingFamilyDates(list){
+  const y = new Date().getFullYear();
+  const wanted = [
+    { title: "🎂 Play-Doh's Birthday", date: y+'-09-07', time:'', who:'dogs', yearly:true },
+    { title: "🎂 Cookie-Doh's Birthday", date: y+'-04-25', time:'', who:'dogs', yearly:true },
+    { title: "🎂 Astro-Doh's Birthday", date: y+'-02-11', time:'', who:'dogs', yearly:true },
+    { title: "💕 Dustin & Hannah — Dating Anniversary", date: y+'-10-12', time:'', who:'family', yearly:true }
+  ];
+  let changed = false;
+  const out = list.slice();
+  for (const w of wanted){
+    if (!out.some(e => e.title === w.title)){ out.push({ id: uid(), title: w.title, date: w.date, time: w.time, who: w.who, yearly: w.yearly }); changed = true; }
+  }
+  return { list: out, changed };
+}
+(function familyDatesMigration(){
+  const r = addMissingFamilyDates(events);
+  if (r.changed){ events = r.list; save(LS.events, events); }
 })();
 
 /* Dustin's rule: the family calendar holds ONLY birthdays + holidays.
@@ -434,13 +460,15 @@ function applyRemoteState(s){
   if (Array.isArray(s.notes)) notes = s.notes;
   const cleaned = cleanSeededEvents(events);
   if (cleaned.changed) events = cleaned.list;
+  const datesAdded = addMissingFamilyDates(events);
+  if (datesAdded.changed) events = datesAdded.list;
   const notesMigrated = migrateNotes(notes);
   if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
   try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
   try { localStorage.setItem(LS.tasks, JSON.stringify(tasks)); } catch(e){}
   try { localStorage.setItem(LS.notes, JSON.stringify(notes)); } catch(e){}
   syncApplying = false;
-  if (cleaned.changed || notesMigrated) schedulePush();
+  if (cleaned.changed || datesAdded.changed || notesMigrated) schedulePush();
   renderCalendar(); renderTasks(); renderNotes(); renderPhoto();
 }
 async function pushState(){
