@@ -62,6 +62,12 @@
   .confetti-piece { position:absolute; top:0; font-size:20px; animation:confetti-fall 2.8s ease-in infinite; }
   .anim-founder { display:inline-block; animation:cake-bob 1.4s ease-in-out infinite; filter:drop-shadow(0 0 10px rgba(240,180,41,.9)); }
   .day-cell.founder-day { outline:2px solid #f0b429; outline-offset:-2px; background:linear-gradient(160deg, rgba(240,180,41,.22), rgba(255,43,43,.16)); }
+  /* Dustin & Hannah's Wedding Day — the humongous one, bigger than Founder Day */
+  @keyframes wedding-glow { 0%,100%{ box-shadow:0 0 30px rgba(240,180,41,.45), 0 0 80px rgba(255,43,43,.35), 0 0 120px rgba(37,208,232,.25); } 50%{ box-shadow:0 0 55px rgba(240,180,41,.85), 0 0 120px rgba(255,43,43,.6), 0 0 170px rgba(37,208,232,.4); } }
+  @keyframes wedding-ring { 0%,100%{ transform:translateY(0) rotate(-6deg) scale(1); } 50%{ transform:translateY(-8px) rotate(6deg) scale(1.12); } }
+  .wedding-hero { background:linear-gradient(120deg, rgba(240,180,41,.32), rgba(255,43,43,.32), rgba(37,208,232,.28), rgba(240,180,41,.32)); background-size:250% 250%; border:3px solid #f0b429; animation:founder-shine 4s ease infinite, wedding-glow 2s ease-in-out infinite; }
+  .anim-wedding { display:inline-block; animation:wedding-ring 1.3s ease-in-out infinite; filter:drop-shadow(0 0 14px rgba(240,180,41,1)); }
+  .day-cell.wedding-day { outline:2px solid #f0b429; outline-offset:-2px; background:linear-gradient(160deg, rgba(240,180,41,.24), rgba(255,43,43,.18)); }
   .evt-pill { display:flex; align-items:center; gap:4px; font-size:11px; line-height:1.25; padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.07); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   .evt-pill:hover { background:rgba(255,255,255,.14); }
   .dot { width:8px; height:8px; border-radius:9999px; flex-shrink:0; }
@@ -542,6 +548,7 @@ function specialDay(dateObj, evs){
   const badges = [];
   if (evs.some(e => /birthday/i.test(e.title))) badges.push({ icon:'🎂', label:'Birthday!', cls:'anim-cake' });
   if (evs.some(e => /founder/i.test(e.title))) badges.push({ icon:'👑', label:'Founder Day', cls:'anim-founder' });
+  if (evs.some(e => /wedding/i.test(e.title))) badges.push({ icon:'💍', label:'Wedding Day', cls:'anim-wedding' });
   const md = pad(m+1) + '-' + pad(d);
   const FIXED = {
     '01-01':['🎆',"New Year's Day",'anim-twinkle'],
@@ -634,6 +641,20 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
         '<div class="relative mt-2 text-3xl"><span class="anim-cake">🎂</span> <span class="anim-twinkle">🎆</span> <span class="anim-cake">🎂</span> <span class="anim-twinkle">🎇</span> <span class="anim-cake">🎂</span></div>' +
       '</div>';
     }
+    /* Dustin & Hannah's Wedding Day — the humongous one: bigger rings, more confetti, triple glow */
+    if (dayEvs.some(e => /wedding/i.test(e.title))){
+      const isWeddingYear = day.getFullYear() === 2027;
+      bannerHtml += '<div class="wedding-hero relative overflow-hidden rounded-xl px-4 py-6 mb-4 text-center">' +
+        '<div style="position:absolute; inset:0; pointer-events:none; overflow:hidden;" aria-hidden="true">' +
+          ['💍','🎉','⭐','🎊','✨','💐','🎈','❤️'].map((c,i)=>'<span class="confetti-piece" style="left:'+(4+i*12)+'%; animation-delay:'+(i*0.3)+'s;">'+c+'</span>').join('') +
+        '</div>' +
+        '<div class="relative"><span class="anim-wedding" style="font-size:84px; line-height:1;">💍</span></div>' +
+        '<div class="bebas relative leading-none mt-1" style="font-size:64px; color:#f0b429; text-shadow:0 0 34px rgba(240,180,41,.9);">DUSTIN &amp; HANNAH\'S WEDDING DAY</div>' +
+        '<div class="relative text-lg font-bold text-white mt-1">Two outlaws, one vow. 💍❤️</div>' +
+        '<div class="relative text-sm text-zinc-200 mt-1">' + (isWeddingYear ? 'July 17, 2027 — Dustin &amp; Hannah say \'I do.\'' : 'July 17 — Dustin &amp; Hannah\'s wedding anniversary.') + '</div>' +
+        '<div class="relative mt-2 text-4xl"><span class="anim-wedding">💍</span> <span class="anim-twinkle">🎆</span> <span class="anim-wedding">💍</span> <span class="anim-twinkle">🎇</span> <span class="anim-wedding">💍</span></div>' +
+      '</div>';
+    }
     if (bdayEvs.length){
       const names = bdayEvs.map(e => { const mm = e.title.match(/([A-Za-z]+)'s\s+[Bb]irthday/); return mm ? mm[1] : null; }).filter(Boolean);
       const whoTxt = names.length ? ', ' + names.join(' & ').toUpperCase() : '';
@@ -643,7 +664,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
         '<span class="text-sm text-zinc-200">' + bdayEvs.map(e => e.title).join(' • ') + '</span></span>' +
         '<span class="anim-cake" style="font-size:56px; line-height:1;">🎂</span></div>';
     }
-    for (const b of badges.filter(x => x.label !== 'Birthday!')){
+    for (const b of badges.filter(x => x.label !== 'Birthday!' && x.label !== 'Wedding Day')){
       bannerHtml += '<div class="celebrate-holiday rounded-xl px-4 py-3 mb-4 flex items-center justify-center gap-4 text-center">' +
         '<span class="' + b.cls + '" style="font-size:52px; line-height:1;">' + b.icon + '</span>' +
         '<span class="bebas leading-none" style="font-size:32px;">' + b.label.toUpperCase() + '</span>' +
@@ -702,7 +723,8 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     const ds = dstr(day);
     const isToday = ds === t;
     const isSepBday = day.getMonth() === 8 && day.getDate() === 11;
-    cell.className = 'day-cell rounded-lg bg-zinc-900/60 border border-zinc-800 p-1.5 text-left' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep founder-day' : '');
+    const isWeddingDay = day.getMonth() === 6 && day.getDate() === 17;
+    cell.className = 'day-cell rounded-lg bg-zinc-900/60 border border-zinc-800 p-1.5 text-left' + (isToday ? ' today' : '') + (isSepBday ? ' birthday-sep founder-day' : '') + (isWeddingDay ? ' wedding-day' : '');
     cell.onclick = () => openEventModal(ds);
     const dayEvs = eventsOn(ds);
     const badges = specialDay(day, dayEvs);
@@ -710,6 +732,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     for (const b of badges) html += '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:' + (isFs ? '22px' : '15px') + '">' + b.icon + '</span>';
     html += '</span></div><div class="space-y-1 mt-1">';
     if (isSepBday) html += '<div class="text-[10px] font-extrabold tracking-wide px-1.5 py-0.5 rounded" style="background:rgba(240,180,41,.25); color:#f0b429;">👑 FOUNDER DAY</div>';
+    if (isWeddingDay) html += '<div class="text-[10px] font-extrabold tracking-wide px-1.5 py-0.5 rounded" style="background:rgba(240,180,41,.25); color:#f0b429;">💍 WEDDING DAY</div>';
     const maxEv = isFs ? 6 : 4;
     const evs = dayEvs.slice(0, maxEv);
     for (const e of evs){
