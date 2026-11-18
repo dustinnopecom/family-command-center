@@ -106,6 +106,14 @@
   .list-card .list-body { padding:10px 12px; }
   .list-item { display:flex; align-items:center; gap:8px; padding:6px 4px; font-size:14px; }
   .list-item.done span.txt { text-decoration:line-through; opacity:.45; }
+
+/* Emergency button: flashing beacon + a light that circles the button */
+@keyframes emerg-flash { 0%,100% { opacity:1; box-shadow:0 0 12px 3px rgba(255,70,70,.95); } 50% { opacity:.3; box-shadow:0 0 4px 1px rgba(255,70,70,.5); } }
+@keyframes emerg-spin { to { transform:rotate(360deg); } }
+.emerg-btn { position:relative; }
+.emerg-btn .beacon { display:inline-block; width:14px; height:14px; border-radius:9999px; background:radial-gradient(circle at 35% 35%, #ffffff, #ff5a5a 45%, #b91c1c); animation:emerg-flash 1s ease-in-out infinite; vertical-align:-1px; }
+.emerg-btn::after { content:''; position:absolute; inset:-5px; border-radius:18px; border:2px solid transparent; border-top-color:rgba(255,255,255,.95); border-right-color:rgba(255,90,90,.95); animation:emerg-spin 2.8s linear infinite; pointer-events:none; }
+@media (prefers-reduced-motion: reduce) { .emerg-btn .beacon, .emerg-btn::after { animation:none; } }
 </style>
 <style>
 /* BAKED-IN Tailwind fallback — renders even when the Play CDN can't load */
@@ -333,10 +341,10 @@ img{max-width:100%;}
     <h2 class="panel-title text-2xl" style="color:var(--cyan);">⚡ QUICK ADD</h2>
     <span class="text-zinc-400 text-sm">One tap, fill in the blanks, done — no hunting around.</span>
     <div class="flex flex-wrap gap-2 ml-auto">
-      <button onclick="quickAdd('event')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:var(--red);">📅 Add Event</button>
+      <button onclick="quickAdd('event')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#d97706;">📅 Add Event</button>
       <button onclick="quickAdd('task')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#0e7490;">✅ Add Task</button>
       <button onclick="quickAdd('note')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#6d28d9;">📌 Add Note</button>
-      <button onclick="openEmergency()" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#dc2626; box-shadow:0 0 16px rgba(220,38,38,.55);">🚨 Dustin Emergency Info</button>
+      <button onclick="openEmergency()" class="emerg-btn px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#dc2626; box-shadow:0 0 16px rgba(220,38,38,.55);"><span class="beacon"></span> Dustin Emergency Info</button>
     </div>
   </section>
 
@@ -354,7 +362,7 @@ img{max-width:100%;}
         <button onclick="shiftCal(-1)" class="tool-btn">‹</button>
         <button onclick="goToday()" class="tool-btn">Today</button>
         <button onclick="shiftCal(1)" class="tool-btn">›</button>
-        <button onclick="openEventModal()" class="tool-btn text-white" style="background:var(--red);">+ Add Event</button>
+        <button onclick="openEventModal()" class="tool-btn text-white" style="background:#d97706;">+ Add Event</button>
         <button onclick="openCalFullscreen()" class="tool-btn">⛶ Full Screen</button>
       </div>
     </div>
@@ -509,7 +517,7 @@ img{max-width:100%;}
         <button onclick="shiftCal(-1)" class="tool-btn">‹</button>
         <button onclick="goToday()" class="tool-btn">Today</button>
         <button onclick="shiftCal(1)" class="tool-btn">›</button>
-        <button onclick="openEventModal()" class="tool-btn text-white" style="background:var(--red);">+ Add Event</button>
+        <button onclick="openEventModal()" class="tool-btn text-white" style="background:#d97706;">+ Add Event</button>
         <button onclick="closeCalFullscreen()" class="tool-btn text-white" style="background:var(--red);">✕ Close</button>
       </div>
     </div>
@@ -568,8 +576,8 @@ img{max-width:100%;}
 </div>
 
 <!-- ============ DUSTIN EMERGENCY MEDICAL INFO ============ -->
-<div id="emergencyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.8);">
-  <div class="panel w-full max-w-lg p-5 overflow-y-auto" style="border-top:4px solid #dc2626; max-height:90vh;">
+<div id="emergencyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.8); overflow-y:auto; overscroll-behavior:contain;">
+  <div class="panel w-full max-w-lg p-5" style="border-top:4px solid #dc2626; max-height:90vh; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;">
     <h3 class="panel-title text-3xl" style="color:#ff2b2b;">🚨 DUSTIN — EMERGENCY MEDICAL INFO</h3>
     <p class="text-zinc-300 text-sm mt-2">If Dustin is in trouble and can't speak for himself, use this. Everything a paramedic or ER nurse needs is right here.</p>
     <a href="tel:911" class="block text-center mt-4 py-3 rounded-xl font-bold text-white text-lg" style="background:#dc2626;">📞 CALL 911 NOW</a>
@@ -1017,7 +1025,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
           '<span class="flex gap-2">' + badges.map(b => '<span class="anim-badge ' + b.cls + '" title="' + b.label + '" style="font-size:34px">' + b.icon + '</span>').join('') + '</span>' +
           (isToday ? '<span class="px-3 py-1 rounded-full text-xs font-bold text-white" style="background:var(--red);">TODAY</span>' : '') +
         '</div>' +
-        '<button onclick="openEventModal(\'' + ds + '\')" class="px-4 py-2 rounded-lg font-bold text-sm text-white" style="background:var(--red);">+ Add something this day</button>' +
+        '<button onclick="openEventModal(\'' + ds + '\')" class="px-4 py-2 rounded-lg font-bold text-sm text-white" style="background:#d97706;">+ Add something this day</button>' +
       '</div>' +
       '<div class="mt-4 space-y-2">';
     const dated = dayEvs;
@@ -1212,8 +1220,8 @@ function openEventModal(dateStr){
 }
 function closeEventModal(){ $('eventModal').classList.add('hidden'); }
 /* ---- Dustin emergency medical info ---- */
-function openEmergency(){ $('emergencyModal').classList.remove('hidden'); }
-function closeEmergency(){ $('emergencyModal').classList.add('hidden'); }
+function openEmergency(){ $('emergencyModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+function closeEmergency(){ $('emergencyModal').classList.add('hidden'); document.body.style.overflow = ''; }
 function saveEvent(){
   const title = $('evTitle').value.trim();
   const date = $('evDate').value;
