@@ -431,6 +431,18 @@ img{max-width:100%;}
       </div>
       <ul id="taskList" class="mt-3 space-y-2 text-sm"></ul>
     </section>
+
+    <!-- Countdowns (Hannah's big-day countdowns) -->
+    <section class="panel p-5">
+      <h2 class="panel-title text-3xl" style="color:var(--cyan);">⏳ COUNTDOWN UNTIL</h2>
+      <p class="text-zinc-400 text-sm mt-1">Big days, counting down — even the far-away ones you can't see on this month's calendar.</p>
+      <div class="flex gap-2 mt-3">
+        <input id="cdTitleInput" type="text" placeholder="What are we counting down to?…" class="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')addCountdown()">
+        <input id="cdDateInput" type="date" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none shrink-0" style="color-scheme:dark;">
+        <button onclick="addCountdown()" class="px-4 py-2 rounded-lg font-bold text-sm text-white shrink-0" style="background:var(--red);">Add</button>
+      </div>
+      <ul id="countdownList" class="mt-3 space-y-2 text-sm"></ul>
+    </section>
   </div>
 
   <!-- ============ CUSTOM LISTS ============ -->
@@ -628,7 +640,7 @@ const MEMBERS = {
 function memberBg(who){
   return { dustin:'#fecaca', hannah:'#a5f3fc', harley:'#ddd6fe', dogs:'#bbf7d0', family:'#e5e7eb' }[who] || '#e5e7eb';
 }
-const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1' };
+const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1', countdowns:'fcc_countdowns_v1' };
 const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const pad = n => String(n).padStart(2,'0');
@@ -659,6 +671,7 @@ let events = load(LS.events, []);
 let tasks  = load(LS.tasks, []);
 let notes  = load(LS.notes, []);
 let lists  = load(LS.lists, []);
+let countdowns = load(LS.countdowns, []);
 let taskFilter = 'all';
 let view = 'month';
 let cursor = new Date();
@@ -739,6 +752,28 @@ function addMissingFamilyDates(list){
   save(LS.lists, lists);
 })();
 
+/* ---- Countdowns: Hannah's big-day countdowns ----
+   Wedding is a one-time date; Christmas rolls to next year's Dec 25
+   the day after Christmas, so it always counts down to the next one.
+   ensureCountdowns() adds any missing locked countdowns — it runs at load
+   AND on every remote apply, so devices that already seeded still get them. */
+function ensureCountdowns(list){
+  const wanted = [
+    { title: '💍 Our Wedding Day', date: '2027-07-17', yearly:false, locked:true },
+    { title: '🎄 Christmas', month: 12, day: 25, yearly:true, locked:true }
+  ];
+  let changed = false;
+  const out = list.slice();
+  for (const w of wanted){
+    if (!out.some(c => c.title === w.title)){ out.push(Object.assign({ id: uid() }, w)); changed = true; }
+  }
+  return { list: out, changed };
+}
+(function countdownsMigration(){
+  const r = ensureCountdowns(countdowns);
+  if (r.changed){ countdowns = r.list; save(LS.countdowns, countdowns); }
+})();
+
 /* Dustin's rule: the family calendar holds ONLY birthdays + holidays.
    Nothing from his phone/Google calendar gets added — he adds the rest himself.
    Strip out anything else I pre-seeded (e.g. the Syllaby demo). */
@@ -778,30 +813,34 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "820413309064",
   appId: "1:820413309064:web:bc3507cbf090602637ff3d"
 };
-function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, caption: localStorage.getItem(LS.caption) || '' }); }
+function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, countdowns, caption: localStorage.getItem(LS.caption) || '' }); }
 function setSyncStatus(msg){ const el = $('syncStatus'); if (el) el.textContent = msg; }
 function applyRemoteState(s){
   if (!s) return;
-  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], caption: s.caption || '' });
+  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], countdowns: s.countdowns || [], caption: s.caption || '' });
   if (incoming === stateJson()) return; /* already in sync — no re-render, no echo write */
   syncApplying = true;
   if (Array.isArray(s.events)) events = s.events;
   if (Array.isArray(s.tasks)) tasks = s.tasks;
   if (Array.isArray(s.notes)) notes = s.notes;
   if (Array.isArray(s.lists)) lists = s.lists;
+  if (Array.isArray(s.countdowns)) countdowns = s.countdowns;
   const cleaned = cleanSeededEvents(events);
   if (cleaned.changed) events = cleaned.list;
   const datesAdded = addMissingFamilyDates(events);
   if (datesAdded.changed) events = datesAdded.list;
+  const cdsAdded = ensureCountdowns(countdowns);
+  if (cdsAdded.changed) countdowns = cdsAdded.list;
   const notesMigrated = migrateNotes(notes);
   if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
   try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
   try { localStorage.setItem(LS.tasks, JSON.stringify(tasks)); } catch(e){}
   try { localStorage.setItem(LS.notes, JSON.stringify(notes)); } catch(e){}
   try { localStorage.setItem(LS.lists, JSON.stringify(lists)); } catch(e){}
+  try { localStorage.setItem(LS.countdowns, JSON.stringify(countdowns)); } catch(e){}
   syncApplying = false;
-  if (cleaned.changed || datesAdded.changed || notesMigrated) schedulePush();
-  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto();
+  if (cleaned.changed || datesAdded.changed || notesMigrated || cdsAdded.changed) schedulePush();
+  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto(); renderCountdowns();
 }
 async function pushState(){
   if (!syncReady || !syncDoc) return;
@@ -809,7 +848,7 @@ async function pushState(){
   if (j === lastPushedJson) return; /* nothing new to send */
   lastPushedJson = j;
   try {
-    await syncDoc.set({ events, tasks, notes, lists, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+    await syncDoc.set({ events, tasks, notes, lists, countdowns, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
   } catch(e){ console.warn('sync push failed', e); }
 }
 (function initSync(){
@@ -1240,6 +1279,56 @@ function saveEvent(){
 $('eventModal').addEventListener('click', e => { if (e.target.id === 'eventModal') closeEventModal(); });
 $('emergencyModal').addEventListener('click', e => { if (e.target.id === 'emergencyModal') closeEmergency(); });
 
+/* ================= COUNTDOWNS ================= */
+function countdownTarget(c){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (c.yearly){
+    let d = new Date(now.getFullYear(), (c.month || 12) - 1, c.day || 25, 12);
+    if (d < today) d = new Date(now.getFullYear() + 1, (c.month || 12) - 1, c.day || 25, 12);
+    return d;
+  }
+  return new Date(c.date + 'T12:00:00');
+}
+function daysUntil(d){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((t - today) / 86400000);
+}
+function fmtCdDate(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function renderCountdowns(){
+  const list = $('countdownList'); if (!list) return;
+  list.innerHTML = '';
+  const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
+    .sort((a, b) => a.days - b.days);
+  if (!rows.length){ list.innerHTML = '<li class="text-zinc-500 text-sm py-2">No countdowns yet — add a big day above. 🎉</li>'; return; }
+  for (const r of rows){
+    const li = document.createElement('li');
+    li.className = 'flex items-center gap-3 bg-zinc-900/60 border border-zinc-800 rounded-lg px-3 py-2.5';
+    const daysHtml = r.days > 0
+      ? '<span class="text-right shrink-0"><span class="bebas text-3xl leading-none" style="color:var(--cyan);">' + r.days + '</span> <span class="text-zinc-400 text-xs font-semibold">' + (r.days === 1 ? 'day' : 'days') + '</span></span>'
+      : r.days === 0
+      ? '<span class="text-right shrink-0 font-bold text-base" style="color:#4ade80;">Today! 🎉</span>'
+      : '<span class="text-right shrink-0 font-bold text-sm text-zinc-500">Passed</span>';
+    li.innerHTML =
+      '<span class="flex-1 min-w-0"><span class="block font-bold truncate">' + r.c.title.replace(/</g,'&lt;') + '</span>' +
+      '<span class="block text-xs text-zinc-500">' + fmtCdDate(r.target) + (r.c.yearly ? ' • every year' : '') + '</span></span>' +
+      daysHtml +
+      (r.c.locked ? '' : '<button onclick="delCountdown(\'' + r.c.id + '\')" class="text-zinc-500 hover:text-red-400 font-bold px-1 shrink-0" title="Delete">×</button>');
+    list.appendChild(li);
+  }
+}
+function addCountdown(){
+  const title = $('cdTitleInput').value.trim();
+  const date = $('cdDateInput').value;
+  if (!title || !date) return;
+  countdowns.unshift({ id: uid(), title, date, yearly:false });
+  $('cdTitleInput').value = ''; $('cdDateInput').value = '';
+  save(LS.countdowns, countdowns); renderCountdowns();
+}
+function delCountdown(id){ countdowns = countdowns.filter(x => x.id !== id); save(LS.countdowns, countdowns); renderCountdowns(); }
+
 /* ================= TASKS ================= */
 function setTaskFilter(f){
   taskFilter = f;
@@ -1405,16 +1494,19 @@ async function loadNews(){
 }
 
 /* ================= CLOCK ================= */
+let lastCdDay = '';
 function tickClock(){
   const now = new Date();
   let h = now.getHours(); const m = pad(now.getMinutes());
   const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
   $('clock').textContent = h + ':' + m + ' ' + ampm;
   $('dateLine').textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const ds = dstr(now);
+  if (ds !== lastCdDay){ lastCdDay = ds; renderCountdowns(); }
 }
 
 /* ================= BOOT ================= */
-renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto();
+renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto(); renderCountdowns();
 loadWeather(); loadNews(); tickClock();
 setInterval(tickClock, 15000);
 setInterval(loadWeather, 15 * 60 * 1000);
