@@ -766,9 +766,29 @@ function ensureCountdowns(list){
   let changed = false;
   const out = list.slice();
   for (const w of wanted){
-    if (!out.some(c => c.title === w.title)){ out.push(Object.assign({ id: uid() }, w)); changed = true; }
+    if (w.release){
+      /* Releases match by date, not title: renaming a release label must
+         rename the synced row, not add a second row for the same release. */
+      const existing = out.find(c => c.release && c.date === w.date);
+      if (existing){
+        if (existing.title !== w.title){ existing.title = w.title; changed = true; }
+        continue;
+      }
+    } else if (out.some(c => c.title === w.title)){
+      continue;
+    }
+    out.push(Object.assign({ id: uid() }, w)); changed = true;
   }
-  return { list: out, changed };
+  /* Drop duplicate rows for the same release date (old + new label both synced) */
+  const seenReleaseDates = new Set();
+  const deduped = out.filter(c => {
+    if (!c.release) return true;
+    const key = c.date || c.title;
+    if (seenReleaseDates.has(key)){ changed = true; return false; }
+    seenReleaseDates.add(key);
+    return true;
+  });
+  return { list: deduped, changed };
 }
 (function countdownsMigration(){
   const r = ensureCountdowns(countdowns);
