@@ -580,6 +580,17 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 const pad = n => String(n).padStart(2,'0');
 const dstr = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
 const todayStr = () => dstr(new Date());
+/* Dustin's rule: no military time — show 12-hour AM/PM everywhere.
+   Times are stored 24-hour (from the time picker) and converted on display. */
+function formatTime(t){
+  if (!t) return '';
+  const parts = String(t).split(':');
+  let h = parseInt(parts[0], 10);
+  const m = parts[1] || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
 function load(key, fallback){ try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch(e){ return fallback; } }
 /* ---- Family sync state (Firebase) ---- */
 let syncReady = false, syncDoc = null, syncTimer = null, syncApplying = false, lastPushedJson = '';
@@ -894,7 +905,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
       for (const e of evs){
         const m = MEMBERS[e.who] || MEMBERS.family;
         html += '<div class="sched-row" style="background:' + memberBg(e.who) + ';"><span class="dot" style="background:' + m.color + '; width:12px; height:12px;"></span>' +
-          (e.time ? '<span class="font-bold whitespace-nowrap" style="color:#1e293b;">' + e.time.replace(/^0/,'') + '</span>' : '<span class="font-bold whitespace-nowrap" style="color:#475569;">All day</span>') +
+          (e.time ? '<span class="font-bold whitespace-nowrap" style="color:#1e293b;">' + formatTime(e.time) + '</span>' : '<span class="font-bold whitespace-nowrap" style="color:#475569;">All day</span>') +
           '<span class="flex-1" style="color:#1f2937;">' + e.title + '</span><span class="text-xs font-semibold" style="color:#6b7280;">' + m.label + '</span></div>';
       }
       html += '</div>';
@@ -976,7 +987,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
       const m = MEMBERS[e.who] || MEMBERS.family;
       html += '<div class="day-evt flex items-center gap-3 rounded-lg px-4 py-3" style="background:' + memberBg(e.who) + '; border:1px solid ' + m.color + '66;" data-eid="' + e.id + '">' +
         '<span class="dot" style="background:' + m.color + '; width:12px; height:12px;"></span>' +
-          (e.time ? '<span class="font-bold whitespace-nowrap" style="color:#1e293b;">' + e.time.replace(/^0/,'') + '</span>' : '<span class="font-bold whitespace-nowrap" style="color:#475569;">All day</span>') +
+          (e.time ? '<span class="font-bold whitespace-nowrap" style="color:#1e293b;">' + formatTime(e.time) + '</span>' : '<span class="font-bold whitespace-nowrap" style="color:#475569;">All day</span>') +
         '<span class="flex-1 text-base">' + e.title + '</span>' +
         '<span class="text-xs font-semibold" style="color:#475569;">' + m.label + '</span>' +
         (e.id.startsWith('daily-') ? '' : '<button class="del-evt text-zinc-500 hover:text-red-400 font-bold px-2 text-xl leading-none" data-eid="' + e.id + '" title="Delete this event">×</button>') + '</div>';
@@ -1028,7 +1039,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
     const evs = dayEvs.slice(0, maxEv);
     for (const e of evs){
       const m = MEMBERS[e.who] || MEMBERS.family;
-      const label = (e.time ? e.time.replace(/^0/,'').replace(':00 ',' ') + ' ' : '') + e.title;
+      const label = (e.time ? formatTime(e.time) + ' ' : '') + e.title;
       html += '<div class="evt-pill" data-eid="' + e.id + '" data-date="' + ds + '" title="Tap to open that day" style="background:' + memberBg(e.who) + '; border:1px solid ' + m.color + '55;"><span class="dot" style="background:' + m.color + '"></span><span class="truncate">' + label + '</span></div>';
     }
     if (dayEvs.length > maxEv) html += '<div class="text-[10px] text-zinc-500 pl-1">+' + (dayEvs.length - maxEv) + ' more</div>';
@@ -1053,7 +1064,7 @@ function renderCalInto(grid, titleEl, sepEl, isFs){
       for (const e of dated){
         const m = MEMBERS[e.who] || MEMBERS.family;
         ahtml += '<div class="flex items-center gap-2 text-sm rounded-lg px-2 py-1" style="background:' + memberBg(e.who) + ';"><span class="dot" style="background:' + m.color + '"></span>' +
-          (e.time ? '<span class="font-bold" style="color:#1e293b;">' + e.time.replace(/^0/,'') + '</span>' : '<span class="font-bold" style="color:#475569;">All day</span>') +
+          (e.time ? '<span class="font-bold" style="color:#1e293b;">' + formatTime(e.time) + '</span>' : '<span class="font-bold" style="color:#475569;">All day</span>') +
           '<span>' + e.title + '</span><span class="text-xs text-zinc-500">(' + m.label + ')</span></div>';
       }
       ahtml += '</span></div>';
