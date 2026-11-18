@@ -760,7 +760,8 @@ function addMissingFamilyDates(list){
 function ensureCountdowns(list){
   const wanted = [
     { title: '💍 Our Wedding Day', date: '2027-07-17', yearly:false, locked:true },
-    { title: '🎄 Christmas', month: 12, day: 25, yearly:true, locked:true }
+    { title: '🎄 Christmas', month: 12, day: 25, yearly:true, locked:true },
+    { title: '🎵 I Was Never Done', date: '2027-01-01', yearly:false, locked:true, release:true }
   ];
   let changed = false;
   const out = list.slice();
@@ -1310,7 +1311,9 @@ function renderCountdowns(){
       ? '<span class="text-right shrink-0"><span class="bebas text-3xl leading-none" style="color:var(--cyan);">' + r.days + '</span> <span class="text-zinc-400 text-xs font-semibold">' + (r.days === 1 ? 'day' : 'days') + '</span></span>'
       : r.days === 0
       ? '<span class="text-right shrink-0 font-bold text-base" style="color:#4ade80;">Today! 🎉</span>'
-      : '<span class="text-right shrink-0 font-bold text-sm text-zinc-500">Passed</span>';
+      : (r.c.release
+      ? '<span class="text-right shrink-0 font-bold text-base" style="color:#4ade80;">Out now! 🎵</span>'
+      : '<span class="text-right shrink-0 font-bold text-sm text-zinc-500">Passed</span>');
     li.innerHTML =
       '<span class="flex-1 min-w-0"><span class="block font-bold truncate">' + r.c.title.replace(/</g,'&lt;') + '</span>' +
       '<span class="block text-xs text-zinc-500">' + fmtCdDate(r.target) + (r.c.yearly ? ' • every year' : '') + '</span></span>' +
