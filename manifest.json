@@ -1,0 +1,13 @@
+{
+  "name": "Gatlin Family Command Center",
+  "short_name": "Family Calendar",
+  "description": "Gatlin family calendar, lists, tasks and weather for the Lockport household.",
+  "start_url": "https://dustinnopecom.github.io/family-command-center/",
+  "display": "fullscreen",
+  "background_color": "#0b0b10",
+  "theme_color": "#ff2b2b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
