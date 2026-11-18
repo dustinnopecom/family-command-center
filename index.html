@@ -336,6 +336,7 @@ img{max-width:100%;}
       <button onclick="quickAdd('event')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:var(--red);">📅 Add Event</button>
       <button onclick="quickAdd('task')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#0e7490;">✅ Add Task</button>
       <button onclick="quickAdd('note')" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#6d28d9;">📌 Add Note</button>
+      <button onclick="openEmergency()" class="px-5 py-2.5 rounded-xl font-bold text-white text-base" style="background:#dc2626; box-shadow:0 0 16px rgba(220,38,38,.55);">🚨 Dustin Emergency Info</button>
     </div>
   </section>
 
@@ -470,7 +471,7 @@ img{max-width:100%;}
   <section class="panel p-5">
     <h2 class="panel-title text-3xl" style="color:var(--cyan);">🖼️ FAMILY PHOTO FRAME</h2>
     <div class="mt-3 relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900" style="aspect-ratio:4/3;">
-      <img id="photoImg" src="" alt="" class="w-full h-full object-cover hidden">
+      <img id="photoImg" src="" alt="" class="w-full h-full object-cover hidden" style="object-position:center 35%;">
       <div id="photoEmpty" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
         <div class="text-5xl">🐾</div>
         <p class="text-zinc-400 text-sm mt-2">No photo yet.<br>Tap below to put the family<br>(or the pups) up on the wall.</p>
@@ -482,10 +483,10 @@ img{max-width:100%;}
         Choose a photo
         <input type="file" accept="image/*" class="hidden" onchange="setPhoto(event)">
       </label>
-      <button onclick="clearPhoto()" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Remove</button>
+      <button onclick="clearPhoto()" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold">Reset to family photo</button>
     </div>
     <input id="photoCapInput" type="text" placeholder="Caption (optional)…" class="w-full mt-2 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" oninput="setCaption(this.value)">
-    <p class="text-[11px] text-zinc-500 mt-2">The photo is stored on this tablet only, in the browser's local storage.</p>
+    <p class="text-[11px] text-zinc-500 mt-2">The family photo shows here until you pick a different one. A photo you pick yourself is stored on this tablet only.</p>
   </section>
 </main>
 
@@ -563,6 +564,37 @@ img{max-width:100%;}
       <button onclick="saveEvent()" class="flex-1 py-2.5 rounded-lg font-bold text-white" style="background:var(--red);">Save Event</button>
       <button onclick="closeEventModal()" class="px-5 py-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-semibold">Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ DUSTIN EMERGENCY MEDICAL INFO ============ -->
+<div id="emergencyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.8);">
+  <div class="panel w-full max-w-lg p-5 overflow-y-auto" style="border-top:4px solid #dc2626; max-height:90vh;">
+    <h3 class="panel-title text-3xl" style="color:#ff2b2b;">🚨 DUSTIN — EMERGENCY MEDICAL INFO</h3>
+    <p class="text-zinc-300 text-sm mt-2">If Dustin is in trouble and can't speak for himself, use this. Everything a paramedic or ER nurse needs is right here.</p>
+    <a href="tel:911" class="block text-center mt-4 py-3 rounded-xl font-bold text-white text-lg" style="background:#dc2626;">📞 CALL 911 NOW</a>
+    <p class="mt-4 text-sm"><span class="font-bold text-white">Condition:</span> <span class="text-zinc-200">Heart failure</span></p>
+    <h4 class="font-bold text-white mt-4 mb-1">DAILY MEDICATIONS</h4>
+    <ul class="text-sm text-zinc-200 list-disc pl-5 space-y-1">
+      <li><b>Toprol XL 25 mg</b> tablet (extended release): 1 tablet orally once a day.</li>
+      <li><b>Sacubitril-Valsartan 24-26 mg</b> tablet: 1 tablet by mouth twice a day.</li>
+      <li><b>Spironolactone 25 mg</b> tablet: 1/2 tablet by mouth every day.</li>
+      <li><b>Furosemide 20 mg</b> tablet: 1 tablet orally once in the morning (dose decreased on 4-9-2026).</li>
+      <li><b>Jardiance 10 mg</b> tablet: 1 tablet orally once a day.</li>
+      <li><b>Vascepa 1 gram</b> capsule: 2 capsules orally 2 times a day.</li>
+      <li><b>Atorvastatin 20 mg</b> tablet: 1 tablet by mouth every day in the evening.</li>
+      <li><b>Adult Low Dose Aspirin 81 mg</b> tablet (delayed release): 1 tablet orally once a day.</li>
+    </ul>
+    <div class="mt-4 p-4 rounded-xl" style="background:#7f1d1d; border:2px solid #ef4444;">
+      <h4 class="font-bold text-white">⚠️ CHEST PAIN — NITROGLYCERIN PROTOCOL</h4>
+      <p class="text-sm text-white mt-1"><b>Nitroglycerin 0.4 mg sublingual tablet:</b> Dissolve 1 tablet under the tongue every 5 minutes, up to 3 doses as needed for chest pain. <b>DO NOT EXCEED 3 DOSES IN 15 MINUTES.</b> If there is no relief after the third dose, go to the ER or call 911 immediately.</p>
+    </div>
+    <h4 class="font-bold text-white mt-4 mb-1">DOCTORS &amp; CLINICS</h4>
+    <div class="text-sm text-zinc-200 space-y-3">
+      <p><b>Primary Care / Family Doctor:</b> Ochsner Health Center - Lockport<br>1015 Crescent Ave, Lockport, LA 70374<br>Phone: <a href="tel:+19855321620" class="font-bold" style="color:var(--cyan);">(985) 532-1620</a><br>Hours: Monday – Friday, 7:30 AM – 4:30 PM</p>
+      <p><b>Cardiologist:</b> Dr. Dikshya Sharma, MD — Cardiovascular Institute of the South (CIS)<br>Raceland Clinic: 102 Twin Oaks Drive, Raceland, LA 70394<br>Phone: <a href="tel:+19855374000" class="font-bold" style="color:var(--cyan);">(985) 537-4000</a> &bull; Toll-Free: <a href="tel:+18778600012" class="font-bold" style="color:var(--cyan);">(877) 860-0012</a><br>Fax: (985) 537-4074</p>
+    </div>
+    <button onclick="closeEmergency()" class="w-full mt-5 py-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 font-semibold">Close</button>
   </div>
 </div>
 
@@ -867,7 +899,7 @@ function jumpToDay(ds){
 }
 function openCalFullscreen(){ $('calFullscreen').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderCalendar(); window.scrollTo(0,0); }
 function closeCalFullscreen(){ $('calFullscreen').classList.add('hidden'); document.body.style.overflow = ''; }
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeCalFullscreen(); closeEventModal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeCalFullscreen(); closeEventModal(); closeEmergency(); } });
 function goToday(){ cursor = new Date(); renderCalendar(); }
 function shiftCal(dir){
   if (view === 'month') cursor.setMonth(cursor.getMonth() + dir);
@@ -1179,6 +1211,9 @@ function openEventModal(dateStr){
   setTimeout(() => $('evTitle').focus(), 50);
 }
 function closeEventModal(){ $('eventModal').classList.add('hidden'); }
+/* ---- Dustin emergency medical info ---- */
+function openEmergency(){ $('emergencyModal').classList.remove('hidden'); }
+function closeEmergency(){ $('emergencyModal').classList.add('hidden'); }
 function saveEvent(){
   const title = $('evTitle').value.trim();
   const date = $('evDate').value;
@@ -1188,6 +1223,7 @@ function saveEvent(){
   closeEventModal(); renderCalendar();
 }
 $('eventModal').addEventListener('click', e => { if (e.target.id === 'eventModal') closeEventModal(); });
+$('emergencyModal').addEventListener('click', e => { if (e.target.id === 'emergencyModal') closeEmergency(); });
 
 /* ================= TASKS ================= */
 function setTaskFilter(f){
@@ -1268,13 +1304,13 @@ function setCaption(v){ try { localStorage.setItem(LS.caption, v); } catch(e){} 
 function clearPhoto(){ try { localStorage.removeItem(LS.photo); } catch(e){} renderPhoto(); }
 function renderCaption(){
   const cap = (localStorage.getItem(LS.caption) || '').trim();
-  const hasPhoto = !!localStorage.getItem(LS.photo);
+  const hasPhoto = !!(localStorage.getItem(LS.photo) || 'family-photo.jpg');
   $('photoCaption').classList.toggle('hidden', !hasPhoto || !cap);
   $('photoCaption').textContent = cap;
   $('photoCapInput').value = localStorage.getItem(LS.caption) || '';
 }
 function renderPhoto(){
-  const data = localStorage.getItem(LS.photo);
+  const data = localStorage.getItem(LS.photo) || 'family-photo.jpg';
   $('photoImg').classList.toggle('hidden', !data);
   $('photoEmpty').classList.toggle('hidden', !!data);
   if (data) $('photoImg').src = data;
