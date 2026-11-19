@@ -445,6 +445,95 @@ img{max-width:100%;}
     </section>
   </div>
 
+  <!-- ============ HURRICANE SEASON ============ -->
+  <section id="hurricaneSection" class="panel p-5 lg:col-span-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="panel-title text-3xl" style="color:var(--cyan);">🌀 HURRICANE SEASON</h2>
+      <span id="hurricaneSeasonTag" class="text-xs font-bold px-3 py-1.5 rounded-full"></span>
+    </div>
+    <p class="text-zinc-400 text-sm mt-1">June 1 – November 30. When a storm threatens Lafourche Parish, this is where the plan lives — live alerts, threat level, the readiness checklist, and the way out.</p>
+
+    <!-- Off-season slim bar -->
+    <div id="hurricaneOffSeason" class="hidden mt-3 rounded-xl px-4 py-3 text-sm font-semibold flex flex-wrap items-center gap-3" style="background:#111827; border:1px solid #374151;">
+      <span>😴 Hurricane season is over — it starts again <b id="hurricaneNextSeason" class="text-white"></b>.</span>
+      <span class="text-zinc-400 font-normal">Your checklist is saved and waiting.</span>
+      <button onclick="toggleHurricanePeek()" id="hurricanePeekBtn" class="ml-auto px-3 py-1.5 rounded-lg font-bold text-sm text-white shrink-0" style="background:#0e7490;">Peek at the checklist</button>
+    </div>
+
+    <div id="hurricaneBody" class="mt-3 space-y-4">
+      <!-- Medical directive from the household disaster plan -->
+      <div id="hurricaneMedNote" class="rounded-xl px-4 py-3 text-sm" style="background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.45);">
+        <b class="text-red-300">❤️ Dustin's heart + heat don't mix.</b>
+        <span class="text-zinc-300"> Keep cool, keep the meds safe and dry, and don't overdo the physical work. If the power goes out, shade and cold packs first — the generator keeps the cool air going.</span>
+      </div>
+
+      <!-- Threat level -->
+      <div id="hurricaneThreat" class="rounded-xl px-4 py-3"></div>
+
+      <!-- Shown while all clear in-season: explains where the prep stuff went -->
+      <div id="hurricaneQuiet" class="hidden rounded-xl px-4 py-3 text-sm text-zinc-400 flex flex-wrap items-center gap-3" style="background:#111827; border:1px solid #374151;">
+        <span>🌀 Hurricane season is on — stay alert for changing tropical weather. No storm threatening right now. The checklist pops up here at Level 1, and the evacuation routes at Level 3.</span>
+        <button onclick="toggleHurricanePeek()" class="ml-auto px-3 py-1.5 rounded-lg font-bold text-xs text-white shrink-0" style="background:#0e7490;">Show the checklist anyway</button>
+      </div>
+
+      <!-- Live alerts -->
+      <div>
+        <div class="flex flex-wrap items-center gap-3">
+          <h3 class="font-bold text-lg">📡 Live alerts — National Weather Service</h3>
+          <span id="hurricaneUpdated" class="text-xs text-zinc-500">Checking alerts…</span>
+          <button onclick="loadHurricane()" class="ml-auto px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold">↻ Refresh</button>
+        </div>
+        <div id="hurricaneAlerts" class="mt-2 space-y-2 text-sm"></div>
+        <p class="text-[11px] text-zinc-500 mt-2">Live alerts come from the National Weather Service. NHC's own storm list can't be read directly by a web page, so for storm tracks and cones open the <a href="https://www.nhc.noaa.gov" target="_blank" rel="noopener" class="text-cyan-300 underline">National Hurricane Center</a>.</p>
+      </div>
+
+      <!-- Readiness checklist (pops up at Level 1) -->
+      <div id="hurricaneChecklistBlock">
+        <div class="flex flex-wrap items-center gap-3">
+          <h3 class="font-bold text-lg">✅ Storm-ready checklist</h3>
+          <span id="hurricanePct" class="text-sm font-bold"></span>
+          <button onclick="resetHurricane()" class="ml-auto px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold">Reset for a new season</button>
+        </div>
+        <div class="w-full bg-zinc-800 rounded-full h-3 mt-2 overflow-hidden"><div id="hurricaneBar" class="h-3 rounded-full" style="width:0%; background:#16a34a;"></div></div>
+        <div id="hurricaneChecklist" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"></div>
+        <p class="text-[11px] text-zinc-500 mt-2">Checklist syncs across family devices — Hannah can check things off from her phone too.</p>
+      </div>
+
+      <!-- Evacuation triggers — Dustin's GO / NO-GO rules (appear at Level 2) -->
+      <div id="hurricaneTriggers">
+        <h3 class="font-bold text-lg">🚦 Should we go? — evacuation triggers</h3>
+        <p class="text-zinc-400 text-sm mt-1">Leave if <b class="text-white">any</b> of these hit. Roll out 48–72 hours before tropical-storm-force winds, before the highways jam.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-sm">
+          <div class="rounded-xl p-3" style="background:#111827; border:1px solid #374151;"><b>📣 Official orders</b><br>• Mandatory or phased evacuation order covering Lockport<br>• State Phase 2 — areas south of I-10, ~40 hrs before tropical-storm-force winds</div>
+          <div class="rounded-xl p-3" style="background:#111827; border:1px solid #374151;"><b>🌀 Category &amp; track</b><br>• Cat 3+ (111+ mph) toward Central / SE Louisiana, esp. slow or stalling<br>• Any Cat 4/5 threatening Lafourche — automatic leave<br>• Rapid intensification in the Gulf, &lt;48 hrs to landfall, Lockport on the dirty east/northeast side</div>
+          <div class="rounded-xl p-3" style="background:#111827; border:1px solid #374151;"><b>🌊 Water &amp; surge</b><br>• Surge pushing against Lafourche levees or overtopping near Bayou Lafourche<br>• 8–12+ in. of rain — LA-1, LA-308 or US-90 under water, exit cut off<br>• Bayou / canal levels already running abnormally high</div>
+          <div class="rounded-xl p-3" style="background:#111827; border:1px solid #374151;"><b>🔌 Power, health &amp; household</b><br>• Power out 5+ days in high heat/humidity (Ida-style)<br>• Heat or meds make riding it out on the Pulsar 5250W alone unsafe<br>• Rule of thumb: TS / Cat 1 stay and prep — Cat 2 borderline — Cat 3/4/5 go early</div>
+        </div>
+      </div>
+
+      <!-- Evacuation routes (pop up at Level 3) -->
+      <div id="hurricaneRoutesBlock">
+        <h3 class="font-bold text-lg">🚗 Way out — evacuation routes</h3>
+        <p class="text-sm mt-1" style="color:#fbbf24;"><b>📍 Pick by the track:</b> storm tracking east or far-west → Route Alpha. Storm tracking west → Route Bravo. Check the NHC cone before you roll — never drive into where the storm is headed next. <a href="https://www.nhc.noaa.gov" target="_blank" rel="noopener" class="underline" style="color:#fbbf24;">nhc.noaa.gov →</a></p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+          <div class="rounded-xl p-4 text-sm" style="background:#111827; border:1px solid #374151;">
+            <div class="font-bold text-base">ROUTE ALPHA — Central / North Louisiana</div>
+            <p class="text-zinc-400 mt-1">Use when the storm is tracking east (toward MS/AL) or far-west (toward TX), leaving the middle of the state clear. Alexandria, LA — about 3.5 hours via LA-24 / US-90 to I-49 North.</p>
+            <p class="mt-2"><b class="text-white">Stay:</b> Home2 Suites by Hilton Alexandria — 3800 Alexandria Mall Dr, Alexandria, LA 71301. Pet-friendly, full fridge + kitchen for low-sodium meals.</p>
+            <p class="mt-1 text-zinc-400">Backup: La Quinta Inn &amp; Suites Shreveport Airport — 6700 Financial Cir, Shreveport, LA 71129.</p>
+          </div>
+          <div class="rounded-xl p-4 text-sm" style="background:#111827; border:1px solid #374151;">
+            <div class="font-bold text-base">ROUTE BRAVO — Northeast Mississippi</div>
+            <p class="text-zinc-400 mt-1">Use when the storm is tracking west (hitting southwest LA or the Texas line), opening a clean run north on I-55. Jackson / Ridgeland / Canton, MS — about 3.5 to 4 hours via I-55 North.</p>
+            <p class="mt-2"><b class="text-white">Stay:</b> Drury Inn &amp; Suites Jackson Ridgeland — 6107 I-55 North, Jackson, MS 39211. Pet-friendly, hot breakfast + nightly meals.</p>
+            <p class="mt-1 text-zinc-400">Backup: La Quinta Inn &amp; Suites Canton — 137 Soldiers Colony Rd, Canton, MS 39046.</p>
+          </div>
+        </div>
+        <p class="text-[11px] text-zinc-500 mt-2">From the household disaster plan. Call the hotel before you roll to confirm pet rooms — storm weeks fill up fast.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ CUSTOM LISTS ============ -->
   <section class="panel p-5 lg:col-span-3">
     <h2 class="panel-title text-3xl" style="color:var(--cyan);">🛒 CUSTOM LISTS</h2>
@@ -640,7 +729,7 @@ const MEMBERS = {
 function memberBg(who){
   return { dustin:'#fecaca', hannah:'#a5f3fc', harley:'#ddd6fe', dogs:'#bbf7d0', family:'#e5e7eb' }[who] || '#e5e7eb';
 }
-const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1', countdowns:'fcc_countdowns_v1' };
+const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1', countdowns:'fcc_countdowns_v1', hurricane:'fcc_hurricane_v1' };
 const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const pad = n => String(n).padStart(2,'0');
@@ -672,6 +761,12 @@ let tasks  = load(LS.tasks, []);
 let notes  = load(LS.notes, []);
 let lists  = load(LS.lists, []);
 let countdowns = load(LS.countdowns, []);
+let hurricane = load(LS.hurricane, null);
+(function hurricaneMigration(){
+  const r = mergeHurricaneDefaults(hurricane);
+  hurricane = r.list;
+  if (r.changed) save(LS.hurricane, hurricane);
+})();
 let taskFilter = 'all';
 let view = 'month';
 let cursor = new Date();
@@ -834,11 +929,11 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "820413309064",
   appId: "1:820413309064:web:bc3507cbf090602637ff3d"
 };
-function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, countdowns, caption: localStorage.getItem(LS.caption) || '' }); }
+function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, countdowns, hurricane, caption: localStorage.getItem(LS.caption) || '' }); }
 function setSyncStatus(msg){ const el = $('syncStatus'); if (el) el.textContent = msg; }
 function applyRemoteState(s){
   if (!s) return;
-  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], countdowns: s.countdowns || [], caption: s.caption || '' });
+  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], countdowns: s.countdowns || [], hurricane: s.hurricane || [], caption: s.caption || '' });
   if (incoming === stateJson()) return; /* already in sync — no re-render, no echo write */
   syncApplying = true;
   if (Array.isArray(s.events)) events = s.events;
@@ -846,12 +941,15 @@ function applyRemoteState(s){
   if (Array.isArray(s.notes)) notes = s.notes;
   if (Array.isArray(s.lists)) lists = s.lists;
   if (Array.isArray(s.countdowns)) countdowns = s.countdowns;
+  if (Array.isArray(s.hurricane)) hurricane = s.hurricane;
   const cleaned = cleanSeededEvents(events);
   if (cleaned.changed) events = cleaned.list;
   const datesAdded = addMissingFamilyDates(events);
   if (datesAdded.changed) events = datesAdded.list;
   const cdsAdded = ensureCountdowns(countdowns);
   if (cdsAdded.changed) countdowns = cdsAdded.list;
+  const hurrMerged = mergeHurricaneDefaults(hurricane);
+  if (hurrMerged.changed) hurricane = hurrMerged.list;
   const notesMigrated = migrateNotes(notes);
   if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
   try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
@@ -859,9 +957,10 @@ function applyRemoteState(s){
   try { localStorage.setItem(LS.notes, JSON.stringify(notes)); } catch(e){}
   try { localStorage.setItem(LS.lists, JSON.stringify(lists)); } catch(e){}
   try { localStorage.setItem(LS.countdowns, JSON.stringify(countdowns)); } catch(e){}
+  try { localStorage.setItem(LS.hurricane, JSON.stringify(hurricane)); } catch(e){}
   syncApplying = false;
-  if (cleaned.changed || datesAdded.changed || notesMigrated || cdsAdded.changed) schedulePush();
-  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto(); renderCountdowns();
+  if (cleaned.changed || datesAdded.changed || notesMigrated || cdsAdded.changed || hurrMerged.changed) schedulePush();
+  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto(); renderCountdowns(); renderHurricane();
 }
 async function pushState(){
   if (!syncReady || !syncDoc) return;
@@ -869,7 +968,7 @@ async function pushState(){
   if (j === lastPushedJson) return; /* nothing new to send */
   lastPushedJson = j;
   try {
-    await syncDoc.set({ events, tasks, notes, lists, countdowns, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+    await syncDoc.set({ events, tasks, notes, lists, countdowns, hurricane, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
   } catch(e){ console.warn('sync push failed', e); }
 }
 (function initSync(){
@@ -1356,6 +1455,217 @@ function addCountdown(){
 }
 function delCountdown(id){ countdowns = countdowns.filter(x => x.id !== id); save(LS.countdowns, countdowns); renderCountdowns(); }
 
+/* ================= HURRICANE SEASON =================
+   Live June 1 – Nov 30; dormant the rest of the year (slim bar + peek).
+   Live data: NWS alerts API (api.weather.gov, free, no key — same feed the
+   news ticker already uses). NHC's storm list sends no CORS headers, so a
+   web page can't read it directly — the section links out to nhc.noaa.gov
+   for tracks and cones. Threat levels follow the household disaster plan:
+   L1 Monitor / L2 Warning / L3 Evacuate. */
+const HURRICANE_MONTHS = [5, 6, 7, 8, 9, 10]; /* Jun..Nov (0-indexed) */
+function isHurricaneSeason(d){ return HURRICANE_MONTHS.indexOf((d || new Date()).getMonth()) !== -1; }
+function defaultHurricane(){
+  return [
+    { group: '💊 Medical — Dustin', minLevel: 2, items: [
+      { id: uid(), text: '14-day supply of all heart meds, in the original bottles', done: false },
+      { id: uid(), text: 'Blood pressure cuff + fresh batteries + spare AA/AAA pack', done: false },
+      { id: uid(), text: 'Printed med list — every dose, every time', done: false },
+      { id: uid(), text: '6 instant cold packs', done: false },
+      { id: uid(), text: '2x 20,000mAh power banks, both at 100%', done: false },
+      { id: uid(), text: 'Medical life vest checked — battery full, rides within arm’s reach in the car, never in the trunk', done: false }
+    ]},
+    { group: '🐾 Dogs — Play-Doh, Cookie-Doh & Astro-Doh', minLevel: 2, items: [
+      { id: uid(), text: 'One travel crate per dog', done: false },
+      { id: uid(), text: '7 days of dog food in airtight bags', done: false },
+      { id: uid(), text: '3 gallons of water just for the dogs', done: false },
+      { id: uid(), text: 'Printed rabies + vaccination papers', done: false },
+      { id: uid(), text: 'Collars with phone tags + 6-ft leashes', done: false }
+    ]},
+    { group: '🏠 Home & property', minLevel: 1, items: [
+      { id: uid(), text: 'Sorento never below half a tank (Jun 1 – Nov 30 rule)', done: false },
+      { id: uid(), text: 'Generator fuel — gas + propane for the Pulsar 5250W', done: false },
+      { id: uid(), text: 'Zor-Doh brought inside, dock unplugged', done: false },
+      { id: uid(), text: 'Outdoor stuff secured or brought in', done: false },
+      { id: uid(), text: 'Drop the pond 4–6 in.', done: false },
+      { id: uid(), text: 'Secure the pool + shed', done: false },
+      { id: uid(), text: 'Emergency binder + important papers in a waterproof bag', done: false },
+      { id: uid(), text: 'Cash on hand', done: false }
+    ]},
+    { group: '🚗 Evacuation', minLevel: 3, items: [
+      { id: uid(), text: 'Go-bags packed — med bag, papers, chargers', done: false },
+      { id: uid(), text: 'Route picked (Alpha or Bravo) + hotel noted', done: false },
+      { id: uid(), text: 'Sorento fueled up', done: false },
+      { id: uid(), text: 'Phones + power banks charged', done: false }
+    ]}
+  ];
+}
+function mergeHurricaneDefaults(list){
+  const d = defaultHurricane();
+  let changed = false;
+  const out = Array.isArray(list) ? list.slice() : [];
+  d.forEach(g => {
+    let grp = out.find(x => x.group === g.group);
+    if (!grp){ grp = { group: g.group, minLevel: g.minLevel, items: [] }; out.push(grp); changed = true; }
+    if (grp.minLevel !== g.minLevel){ grp.minLevel = g.minLevel; changed = true; }
+    if (!Array.isArray(grp.items)) grp.items = [];
+    g.items.forEach(it => {
+      if (!grp.items.some(x => x.text === it.text)){ grp.items.push({ id: uid(), text: it.text, done: false }); changed = true; }
+    });
+  });
+  return { list: out, changed };
+}
+let hurricaneAlerts = null; /* last fetched NWS alert features */
+let hurricaneAlertsError = false;
+let hurricanePeek = false;
+/* Best-effort category read from alert headlines/descriptions.
+   NWS alerts carry no storm category field, so this is a fallback only. */
+function hurricaneCategory(){
+  const feats = hurricaneAlerts || [];
+  let best = 0;
+  feats.forEach(f => {
+    const txt = ((f.properties.headline || '') + ' ' + (f.properties.description || ''));
+    const m = txt.match(/category\s*(\d)/i);
+    if (m) best = Math.max(best, parseInt(m[1], 10));
+  });
+  return best;
+}
+function hurricaneThreatLevel(){
+  const feats = hurricaneAlerts || [];
+  const isTropical = f => /hurricane|tropical/i.test(f.properties.event || '');
+  const isLafourche = f => /lafourche/i.test((f.properties.areaDesc || '') + ' ' + (f.properties.headline || ''));
+  const trop = feats.filter(isTropical);
+  const local = trop.filter(isLafourche);
+  const evac = feats.find(f => /evacuation/i.test(f.properties.event || '') && isLafourche(f));
+  const cat = hurricaneCategory();
+  if (evac)
+    return { level:3, name:'LEVEL 3 — EVACUATE', color:'#f87171', bg:'rgba(220,38,38,.15)', border:'rgba(220,38,38,.6)', action:'A mandatory or phased evacuation order is up for Lafourche Parish. Routes + hotels + full go-bag are up. Leave 48–72 hours before tropical-storm-force winds — before the highways jam.' };
+  if (local.some(f => /hurricane warning/i.test(f.properties.event || '')))
+    return { level:3, name:'LEVEL 3 — EVACUATE', color:'#f87171', bg:'rgba(220,38,38,.15)', border:'rgba(220,38,38,.6)', action:'A hurricane warning is up for Lafourche Parish — a direct hit is threatened. With your heart condition, this is a go. Routes + hotels + full go-bag are up.' };
+  if (cat >= 3 && local.length)
+    return { level:3, name:'LEVEL 3 — EVACUATE', color:'#f87171', bg:'rgba(220,38,38,.15)', border:'rgba(220,38,38,.6)', action:'A Category ' + cat + ' storm is threatening Lafourche Parish. Routes + hotels + full go-bag are up. Pack the Sorento and go early.' };
+  if (local.some(f => /warning|watch/i.test(f.properties.event || '')))
+    return { level:2, name:'LEVEL 2 — WARNING', color:'#fbbf24', bg:'rgba(217,119,6,.15)', border:'rgba(217,119,6,.6)', action:'It is closing on Lafourche Parish. Meds + dogs checklist is up — 14-day meds, crates, papers, leashes. Check the evacuation triggers below and keep watching the track.' };
+  if (trop.length)
+    return { level:1, name:'LEVEL 1 — MONITOR', color:'#fde047', bg:'rgba(234,179,8,.12)', border:'rgba(234,179,8,.55)', action:'A named storm is out there in the Atlantic or Gulf. Prep checklist is up — fuel, Zor-Doh inside, outdoor stuff secured, pond down, cash on hand.' };
+  return { level:0, name:'ALL CLEAR', color:'#4ade80', bg:'rgba(22,163,74,.12)', border:'rgba(22,163,74,.5)', action:'Hurricane season is active, and there are no tropical alerts for Louisiana right now. Keep the checklist moving — do not wait for a storm to start it.' };
+}
+function hurricaneProgress(){
+  let total = 0, done = 0;
+  hurricane.forEach(g => (g.items || []).forEach(it => { total++; if (it.done) done++; }));
+  return { total, done, pct: total ? Math.round(done / total * 100) : 0 };
+}
+function fmtAlertTime(s){
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' ' + formatTime(pad(d.getHours()) + ':' + pad(d.getMinutes()));
+}
+function renderHurricane(){
+  const sec = $('hurricaneSection'); if (!sec) return;
+  const now = new Date();
+  const inSeason = isHurricaneSeason(now);
+  const y = now.getMonth() >= 11 ? now.getFullYear() + 1 : now.getFullYear();
+  $('hurricaneNextSeason').textContent = new Date(y, 5, 1).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  const tag = $('hurricaneSeasonTag');
+  if (inSeason){
+    tag.textContent = '● IN SEASON — Jun 1 to Nov 30';
+    tag.style.cssText = 'background:rgba(22,163,74,.15); color:#4ade80; border:1px solid rgba(22,163,74,.5);';
+  } else {
+    tag.textContent = '○ OFF-SEASON';
+    tag.style.cssText = 'background:#1f2937; color:#9ca3af; border:1px solid #374151;';
+  }
+  const showBody = inSeason || hurricanePeek;
+  $('hurricaneOffSeason').classList.toggle('hidden', inSeason);
+  $('hurricaneBody').classList.toggle('hidden', !showBody);
+  $('hurricanePeekBtn').textContent = hurricanePeek ? 'Hide the checklist' : 'Peek at the checklist';
+  const t = hurricaneThreatLevel();
+  const threat = $('hurricaneThreat');
+  /* Dustin's rule: the level alert only pops up when a level is actually
+     reached — no big banner sitting there all season while everything is clear. */
+  const showThreat = hurricaneAlertsError || t.level > 0;
+  threat.classList.toggle('hidden', !showThreat);
+  if (showThreat && hurricaneAlertsError){
+    threat.style.cssText = 'background:#1f2937; border:1px solid #4b5563;';
+    threat.innerHTML = '<b>⚠️ Couldn\'t reach the National Weather Service.</b> <span class="text-zinc-300">Live alerts are down right now — check <a href="https://www.nhc.noaa.gov" target="_blank" rel="noopener" class="text-cyan-300 underline">nhc.noaa.gov</a> directly.</span>';
+  } else if (showThreat) {
+    threat.style.cssText = 'background:' + t.bg + '; border:1px solid ' + t.border + ';';
+    threat.innerHTML = '<div class="flex flex-wrap items-center gap-3"><span class="bebas text-3xl leading-none" style="color:' + t.color + ';">' + t.name + '</span><span class="text-sm text-zinc-200">' + t.action + '</span></div>';
+  }
+  /* Progressive reveal (Dustin's rule): the prep stuff stays out of the way
+     until a storm actually shows up. Checklist (+ med note) pops up at
+     Level 1; evacuation routes only at Level 3. Peeking shows everything.
+     If the feed is down we show the checklist anyway — better safe. */
+  const lvl = hurricaneAlertsError ? 0 : t.level;
+  const showChecklist = hurricanePeek || (inSeason && (lvl >= 1 || hurricaneAlertsError));
+  const showRoutes = hurricanePeek || lvl >= 3;
+  const showTriggers = hurricanePeek || lvl >= 2 || hurricaneAlertsError;
+  $('hurricaneMedNote').classList.toggle('hidden', !showChecklist);
+  $('hurricaneChecklistBlock').classList.toggle('hidden', !showChecklist);
+  $('hurricaneRoutesBlock').classList.toggle('hidden', !showRoutes);
+  $('hurricaneTriggers').classList.toggle('hidden', !showTriggers);
+  $('hurricaneQuiet').classList.toggle('hidden', !(inSeason && lvl === 0 && !hurricaneAlertsError && !hurricanePeek));
+  const box = $('hurricaneAlerts');
+  const feats = (hurricaneAlerts || []).filter(f => /hurricane|tropical|storm surge|evacuation/i.test(f.properties.event || ''));
+  if (!feats.length){
+    box.innerHTML = '<p class="text-zinc-400">' + (hurricaneAlertsError ? 'Alerts unavailable.' : 'No tropical alerts for Louisiana right now.') + '</p>';
+  } else {
+    box.innerHTML = feats.slice(0,5).map(f => {
+      const p = f.properties;
+      return '<div class="rounded-lg px-3 py-2" style="background:#111827; border:1px solid #374151;"><b>' + String(p.event || '').replace(/</g,'&lt;') + '</b> <span class="text-zinc-400">— ' + String(p.headline || p.areaDesc || '').replace(/</g,'&lt;') + '</span>' +
+        '<div class="text-xs text-zinc-500 mt-0.5">Effective ' + fmtAlertTime(p.effective) + ' • Expires ' + fmtAlertTime(p.expires) + '</div></div>';
+    }).join('');
+  }
+  /* Per-group reveal: prep (Home) at L1, Medical + Dogs at L2, Evacuation at L3.
+     On a feed error everything shows — better safe. Progress counts only
+     the groups that are actually on screen. */
+  const groupVisible = g => hurricanePeek || hurricaneAlertsError || (g.minLevel || 1) <= lvl;
+  let total = 0, done = 0;
+  hurricane.forEach(g => { if (!groupVisible(g)) return; (g.items || []).forEach(it => { total++; if (it.done) done++; }); });
+  const pct = total ? Math.round(done / total * 100) : 0;
+  $('hurricanePct').textContent = done + ' of ' + total + ' ready — ' + pct + '%';
+  $('hurricaneBar').style.width = pct + '%';
+  $('hurricaneBar').style.background = pct === 100 ? '#16a34a' : pct >= 50 ? '#eab308' : '#dc2626';
+  $('hurricaneChecklist').innerHTML = hurricane.map((g, gi) => {
+    if (!groupVisible(g)) return '';
+    return '<div class="rounded-xl p-3" style="background:#111827; border:1px solid #374151;">' +
+    '<div class="font-bold text-sm mb-2">' + String(g.group || '').replace(/</g,'&lt;') + '</div>' +
+    (g.items || []).map((it, ii) =>
+      '<label class="flex items-start gap-2 py-1.5 text-sm cursor-pointer' + (it.done ? ' text-zinc-500 line-through' : '') + '">' +
+      '<input type="checkbox" ' + (it.done ? 'checked' : '') + ' onchange="toggleHurricaneItem(' + gi + ',' + ii + ')" class="mt-0.5 shrink-0" style="width:18px; height:18px; accent-color:#16a34a;">' +
+      '<span>' + String(it.text || '').replace(/</g,'&lt;') + '</span></label>'
+    ).join('') + '</div>';
+  }).join('');
+}
+function toggleHurricaneItem(gi, ii){
+  const it = hurricane[gi] && hurricane[gi].items[ii];
+  if (!it) return;
+  it.done = !it.done;
+  save(LS.hurricane, hurricane);
+  renderHurricane();
+}
+function resetHurricane(){
+  if (!confirm('Reset the whole storm checklist for a new season? Everything goes back to unchecked.')) return;
+  hurricane.forEach(g => (g.items || []).forEach(it => it.done = false));
+  save(LS.hurricane, hurricane);
+  renderHurricane();
+}
+function toggleHurricanePeek(){
+  hurricanePeek = !hurricanePeek;
+  renderHurricane();
+}
+async function loadHurricane(){
+  try {
+    const r = await fetch('https://api.weather.gov/alerts/active?area=LA&status=actual', { headers:{ 'Accept':'application/geo+json' } });
+    const j = await r.json();
+    hurricaneAlerts = j.features || [];
+    hurricaneAlertsError = false;
+    $('hurricaneUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  } catch(e){
+    hurricaneAlerts = [];
+    hurricaneAlertsError = true;
+  }
+  renderHurricane();
+}
+
 /* ================= TASKS ================= */
 function setTaskFilter(f){
   taskFilter = f;
@@ -1529,15 +1839,16 @@ function tickClock(){
   $('clock').textContent = h + ':' + m + ' ' + ampm;
   $('dateLine').textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
   const ds = dstr(now);
-  if (ds !== lastCdDay){ lastCdDay = ds; renderCountdowns(); }
+  if (ds !== lastCdDay){ lastCdDay = ds; renderCountdowns(); renderHurricane(); }
 }
 
 /* ================= BOOT ================= */
-renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto(); renderCountdowns();
-loadWeather(); loadNews(); tickClock();
+renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto(); renderCountdowns(); renderHurricane();
+loadWeather(); loadNews(); loadHurricane(); tickClock();
 setInterval(tickClock, 15000);
 setInterval(loadWeather, 15 * 60 * 1000);
 setInterval(loadNews, 10 * 60 * 1000);
+setInterval(loadHurricane, 15 * 60 * 1000);
 </script>
 </body>
 </html>
