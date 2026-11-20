@@ -409,18 +409,20 @@ img{max-width:100%;}
       <p class="text-[11px] text-zinc-500 mt-3">Live from Open-Meteo • Updates every time this page loads • °F / mph</p>
     </section>
 
-    <!-- Task tracker -->
+    <!-- Reminders (was Task Tracker — redone Nov 19: per-person pings) -->
     <section class="panel p-5 flex-1">
-      <h2 class="panel-title text-3xl" style="color:var(--cyan);">✅ TASK TRACKER</h2>
-      <div class="flex gap-2 mt-3">
-        <input id="taskInput" type="text" placeholder="Add a household task…" class="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')addTask()">
-        <select id="taskWho" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none">
+      <h2 class="panel-title text-3xl" style="color:var(--cyan);">🔔 REMINDERS</h2>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <input id="taskInput" type="text" placeholder="Add a reminder…" class="flex-1 min-w-[140px] bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')addTask()">
+        <select id="taskWho" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none" title="Who is this reminder for?">
           <option value="family">Family</option>
           <option value="dustin">Dustin</option>
           <option value="hannah">Hannah</option>
           <option value="harley">Harley</option>
           <option value="dogs">Dogs</option>
         </select>
+        <input id="taskDate" type="date" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none" style="color-scheme:dark;" title="Due date (optional)">
+        <input id="taskTime" type="time" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-2 text-sm outline-none" style="color-scheme:dark;" title="Due time (optional)">
         <button onclick="addTask()" class="px-4 py-2 rounded-lg font-bold text-sm text-white shrink-0" style="background:var(--red);">Add</button>
       </div>
       <div class="flex gap-2 mt-3 text-xs">
@@ -430,7 +432,27 @@ img{max-width:100%;}
         <span id="taskCount" class="ml-auto text-zinc-500 self-center"></span>
       </div>
       <ul id="taskList" class="mt-3 space-y-2 text-sm"></ul>
+
+      <!-- Device setup: each person registers their own phone -->
+      <div class="mt-4 rounded-xl p-3" style="background:#111827; border:1px solid #374151;">
+        <div class="font-bold text-sm">📱 Ping this phone</div>
+        <p class="text-xs text-zinc-400 mt-1">Each person sets up their own phone. When a reminder comes due, it pings only that person's phone — not everybody's. (Pings use your phone's own alert sound and work while the app is open on that phone.)</p>
+        <div class="flex flex-wrap items-center gap-2 mt-2">
+          <label class="text-xs text-zinc-400" for="deviceWho">This phone belongs to:</label>
+          <select id="deviceWho" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm outline-none">
+            <option value="dustin">Dustin</option>
+            <option value="hannah">Hannah</option>
+            <option value="harley">Harley</option>
+          </select>
+          <button onclick="setupDevice()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold">Turn on pings for this phone</button>
+          <button onclick="testPing()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold">Test ping</button>
+        </div>
+        <div id="deviceStatus" class="text-xs mt-2 text-zinc-400">Not set up yet on this phone.</div>
+      </div>
     </section>
+
+    <!-- Reminder ping toast -->
+    <div id="pingToast" class="hidden" style="position:fixed; left:50%; transform:translateX(-50%); bottom:24px; z-index:80; max-width:90vw; background:#111827; border:1px solid #fbbf24; color:#fff; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.5);"></div>
 
     <!-- Countdowns (Hannah's big-day countdowns) -->
     <section class="panel p-5">
@@ -729,7 +751,7 @@ const MEMBERS = {
 function memberBg(who){
   return { dustin:'#fecaca', hannah:'#a5f3fc', harley:'#ddd6fe', dogs:'#bbf7d0', family:'#e5e7eb' }[who] || '#e5e7eb';
 }
-const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1', countdowns:'fcc_countdowns_v1', hurricane:'fcc_hurricane_v1' };
+const LS = { events:'fcc_events_v1', tasks:'fcc_tasks_v1', notes:'fcc_notes_v1', photo:'fcc_photo_v1', caption:'fcc_caption_v1', seeded:'fcc_seeded_v1', lists:'fcc_lists_v1', countdowns:'fcc_countdowns_v1', hurricane:'fcc_hurricane_v1', devices:'fcc_devices_v1', device:'fcc_device_v1' };
 const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const pad = n => String(n).padStart(2,'0');
@@ -767,6 +789,15 @@ let hurricane = load(LS.hurricane, null);
   hurricane = r.list;
   if (r.changed) save(LS.hurricane, hurricane);
 })();
+/* Reminders redo: old task objects (pre-Nov 19) have no due/notified fields.
+   Fill in defaults so nothing is lost — mergeTaskDefaults also runs on
+   every remote apply, so a device that never updated still gets fixed up. */
+(function taskDefaultsMigration(){
+  const r = mergeTaskDefaults(tasks);
+  if (r.changed){ tasks = r.list; save(LS.tasks, tasks); }
+})();
+let devices = load(LS.devices, {}); /* person → registered phones (synced) */
+let deviceIdentity = load(LS.device, null); /* THIS phone only — never synced */
 let taskFilter = 'all';
 let view = 'month';
 let cursor = new Date();
@@ -929,11 +960,11 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "820413309064",
   appId: "1:820413309064:web:bc3507cbf090602637ff3d"
 };
-function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, countdowns, hurricane, caption: localStorage.getItem(LS.caption) || '' }); }
+function stateJson(){ return JSON.stringify({ events, tasks, notes, lists, countdowns, hurricane, devices, caption: localStorage.getItem(LS.caption) || '' }); }
 function setSyncStatus(msg){ const el = $('syncStatus'); if (el) el.textContent = msg; }
 function applyRemoteState(s){
   if (!s) return;
-  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], countdowns: s.countdowns || [], hurricane: s.hurricane || [], caption: s.caption || '' });
+  const incoming = JSON.stringify({ events: s.events || [], tasks: s.tasks || [], notes: s.notes || [], lists: s.lists || [], countdowns: s.countdowns || [], hurricane: s.hurricane || [], devices: s.devices || {}, caption: s.caption || '' });
   if (incoming === stateJson()) return; /* already in sync — no re-render, no echo write */
   syncApplying = true;
   if (Array.isArray(s.events)) events = s.events;
@@ -942,6 +973,7 @@ function applyRemoteState(s){
   if (Array.isArray(s.lists)) lists = s.lists;
   if (Array.isArray(s.countdowns)) countdowns = s.countdowns;
   if (Array.isArray(s.hurricane)) hurricane = s.hurricane;
+  if (s.devices && typeof s.devices === 'object') devices = s.devices;
   const cleaned = cleanSeededEvents(events);
   if (cleaned.changed) events = cleaned.list;
   const datesAdded = addMissingFamilyDates(events);
@@ -950,6 +982,9 @@ function applyRemoteState(s){
   if (cdsAdded.changed) countdowns = cdsAdded.list;
   const hurrMerged = mergeHurricaneDefaults(hurricane);
   if (hurrMerged.changed) hurricane = hurrMerged.list;
+  const tasksMerged = mergeTaskDefaults(tasks);
+  if (tasksMerged.changed) tasks = tasksMerged.list;
+  const devReg = registerThisDevice(); /* re-add this phone if the remote doc lost it */
   const notesMigrated = migrateNotes(notes);
   if (typeof s.caption === 'string'){ try { localStorage.setItem(LS.caption, s.caption); } catch(e){} }
   try { localStorage.setItem(LS.events, JSON.stringify(events)); } catch(e){}
@@ -958,9 +993,10 @@ function applyRemoteState(s){
   try { localStorage.setItem(LS.lists, JSON.stringify(lists)); } catch(e){}
   try { localStorage.setItem(LS.countdowns, JSON.stringify(countdowns)); } catch(e){}
   try { localStorage.setItem(LS.hurricane, JSON.stringify(hurricane)); } catch(e){}
+  try { localStorage.setItem(LS.devices, JSON.stringify(devices)); } catch(e){}
   syncApplying = false;
-  if (cleaned.changed || datesAdded.changed || notesMigrated || cdsAdded.changed || hurrMerged.changed) schedulePush();
-  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto(); renderCountdowns(); renderHurricane();
+  if (cleaned.changed || datesAdded.changed || notesMigrated || cdsAdded.changed || hurrMerged.changed || tasksMerged.changed || devReg) schedulePush();
+  renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderPhoto(); renderCountdowns(); renderHurricane(); renderDeviceStatus();
 }
 async function pushState(){
   if (!syncReady || !syncDoc) return;
@@ -968,7 +1004,7 @@ async function pushState(){
   if (j === lastPushedJson) return; /* nothing new to send */
   lastPushedJson = j;
   try {
-    await syncDoc.set({ events, tasks, notes, lists, countdowns, hurricane, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+    await syncDoc.set({ events, tasks, notes, lists, countdowns, hurricane, devices, caption: localStorage.getItem(LS.caption) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
   } catch(e){ console.warn('sync push failed', e); }
 }
 (function initSync(){
@@ -1674,10 +1710,38 @@ function setTaskFilter(f){
   $('tfDone').className = 'px-3 py-1 rounded-full font-semibold ' + (f==='done' ? 'bg-zinc-700' : 'bg-zinc-800');
   renderTasks();
 }
+/* Reminders redo: old task objects (pre-Nov 19) have no due/notified fields.
+   Fill in defaults so nothing is lost — runs at load AND on every remote apply. */
+function mergeTaskDefaults(list){
+  let changed = false;
+  const out = Array.isArray(list) ? list.slice() : [];
+  for (const t of out){
+    if (t.due === undefined){ t.due = null; changed = true; }
+    if (t.notified === undefined){ t.notified = false; changed = true; }
+  }
+  return { list: out, changed };
+}
+/* Due label in 12-hour AM/PM (Dustin's rule — formatTime converts from the
+   stored 24-hour value on display only). */
+function dueLabel(t){
+  if (!t.due) return '';
+  const d = new Date(t.due);
+  if (isNaN(d)) return '';
+  const time = formatTime(pad(d.getHours()) + ':' + pad(d.getMinutes()));
+  const day = dstr(d);
+  if (day === todayStr()) return 'Today ' + time;
+  const tom = new Date(); tom.setDate(tom.getDate() + 1);
+  if (day === dstr(tom)) return 'Tomorrow ' + time;
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + time;
+}
 function addTask(){
   const text = $('taskInput').value.trim();
   if (!text) return;
-  tasks.unshift({ id: uid(), text, who: $('taskWho').value, done:false });
+  const date = $('taskDate').value; /* YYYY-MM-DD or '' */
+  const time = $('taskTime').value; /* HH:MM (24-hour picker) or '' */
+  let due = null;
+  if (date) due = date + 'T' + (time || '09:00') + ':00'; /* date only → 9:00 AM */
+  tasks.unshift({ id: uid(), text, who: $('taskWho').value, due, done:false, notified:false });
   $('taskInput').value = '';
   save(LS.tasks, tasks); renderTasks();
 }
@@ -1688,20 +1752,156 @@ function renderTasks(){
   const open = tasks.filter(t => !t.done).length;
   $('taskCount').textContent = open + ' open • ' + tasks.length + ' total';
   if (!shown.length){ list.innerHTML = '<li class="text-zinc-500 text-sm py-2">Nothing here — nice work. 👏</li>'; return; }
+  const now = Date.now();
   for (const t of shown){
     const m = MEMBERS[t.who] || MEMBERS.family;
     const li = document.createElement('li');
+    let dueHtml = '';
+    const dueMs = t.due ? new Date(t.due).getTime() : NaN;
+    const overdue = !isNaN(dueMs) && !t.done && dueMs < now;
+    const soon = !isNaN(dueMs) && !t.done && !overdue && (dueMs - now) <= 60 * 60 * 1000;
+    if (!isNaN(dueMs)){
+      if (overdue) dueHtml = '<span class="text-xs font-bold" style="color:#f87171;">⏰ ' + dueLabel(t) + ' — overdue</span>';
+      else if (soon) dueHtml = '<span class="text-xs font-bold" style="color:#fbbf24;">⏰ ' + dueLabel(t) + '</span>';
+      else if (t.done) dueHtml = '<span class="text-xs text-zinc-500">⏰ ' + dueLabel(t) + '</span>';
+      else dueHtml = '<span class="text-xs text-zinc-400">⏰ ' + dueLabel(t) + '</span>';
+    }
     li.className = 'flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 rounded-lg px-3 py-2';
+    if (overdue) li.style.borderColor = '#b91c1c';
+    else if (soon) li.style.borderColor = '#d97706';
     li.innerHTML =
       '<input type="checkbox" ' + (t.done ? 'checked' : '') + ' class="w-5 h-5 accent-red-500 shrink-0 cursor-pointer" onchange="toggleTask(\'' + t.id + '\')">' +
       '<span class="dot" style="background:' + m.color + '" title="' + m.label + '"></span>' +
-      '<span class="flex-1 ' + (t.done ? 'task-done' : '') + '">' + t.text.replace(/</g,'&lt;') + '</span>' +
+      '<span class="flex-1 ' + (t.done ? 'task-done' : '') + '">' + t.text.replace(/</g,'&lt;') + (dueHtml ? '<br>' + dueHtml : '') + '</span>' +
+      (t.due && !t.done ? '<button onclick="snoozeTask(\'' + t.id + '\')" class="text-zinc-400 hover:text-amber-300 font-bold px-1 text-xs shrink-0" title="Snooze 10 minutes">Snooze</button>' : '') +
       '<button onclick="delTask(\'' + t.id + '\')" class="text-zinc-500 hover:text-red-400 font-bold px-1" title="Delete">×</button>';
     list.appendChild(li);
   }
 }
+function snoozeTask(id){
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const base = t.due ? Math.max(new Date(t.due).getTime(), Date.now()) : Date.now();
+  const d = new Date(base + 10 * 60 * 1000); /* +10 minutes */
+  t.due = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  t.notified = false;
+  save(LS.tasks, tasks); renderTasks();
+}
 function toggleTask(id){ const t = tasks.find(x => x.id === id); if (t){ t.done = !t.done; save(LS.tasks, tasks); renderTasks(); } }
 function delTask(id){ tasks = tasks.filter(x => x.id !== id); save(LS.tasks, tasks); renderTasks(); }
+
+/* ================= REMINDER PINGS — per-person device setup =================
+   Dustin's rule (Nov 19): each person sets up their own phone — open the app
+   on the phone, register it as theirs, allow notifications. A due reminder
+   pings ONLY that person's phone; Family reminders ping every registered
+   phone. Phase 1 (built): pings fire while the app is open on that phone —
+   browser Notification (the phone's own alert sound) + in-app toast; the page beep only fires as a fallback when notifications aren't allowed.
+   PHASE 2 (not built): pinging a CLOSED app needs Firebase Cloud Messaging —
+   a service worker (firebase-messaging-sw.js), a VAPID key from the Firebase
+   console, the device token stored in devices[person][i].token below, and a
+   sender that fires at the due time. Do not claim closed-app pings work yet. */
+function registerThisDevice(){
+  if (!deviceIdentity || !deviceIdentity.person || !deviceIdentity.id) return false;
+  const p = deviceIdentity.person;
+  if (!Array.isArray(devices[p])) devices[p] = [];
+  if (devices[p].some(d => d.id === deviceIdentity.id)) return false;
+  devices[p].push({ id: deviceIdentity.id, token: null /* PHASE 2: FCM token goes here */ });
+  save(LS.devices, devices);
+  return true;
+}
+function setupDevice(){
+  const person = $('deviceWho').value;
+  deviceIdentity = { person, id: (deviceIdentity && deviceIdentity.person === person && deviceIdentity.id) ? deviceIdentity.id : uid() };
+  try { localStorage.setItem(LS.device, JSON.stringify(deviceIdentity)); } catch(e){}
+  registerThisDevice();
+  /* PHASE 2 (not built): here is where the FCM token would be fetched —
+     firebase.messaging().getToken({ vapidKey: '...' }) — and stored into
+     devices[person][i].token for closed-app push. Needs the VAPID key from
+     the Firebase console + firebase-messaging-sw.js alongside index.html. */
+  if ('Notification' in window){
+    Notification.requestPermission().then(renderDeviceStatus).catch(renderDeviceStatus);
+  }
+  renderDeviceStatus();
+}
+function renderDeviceStatus(){
+  const el = $('deviceStatus'); if (!el) return;
+  if (!deviceIdentity || !deviceIdentity.person){
+    el.textContent = 'Not set up yet on this phone.';
+    el.style.color = '';
+    return;
+  }
+  const label = memberLabel(deviceIdentity.person);
+  const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+  if (perm === 'granted'){ el.textContent = 'On for ' + label + ' ✓ — reminders for ' + label + ' ping this phone.'; el.style.color = '#4ade80'; }
+  else if (perm === 'denied'){ el.textContent = 'Blocked — notifications are turned off for this app in the browser. Reminders for ' + label + ' won\'t pop up on this phone.'; el.style.color = '#f87171'; }
+  else if (perm === 'default'){ el.textContent = 'Set up for ' + label + ', but notifications aren\'t allowed yet — tap "Turn on pings for this phone" and allow them.'; el.style.color = '#fbbf24'; }
+  else { el.textContent = 'Set up for ' + label + ' — this browser doesn\'t support notifications, so pings show in the app only.'; el.style.color = '#fbbf24'; }
+}
+let pingToastTimer = null;
+function showPingToast(text){
+  const el = $('pingToast'); if (!el) return;
+  el.textContent = text;
+  el.classList.remove('hidden');
+  clearTimeout(pingToastTimer);
+  pingToastTimer = setTimeout(() => el.classList.add('hidden'), 6000);
+}
+let pingAudioCtx = null;
+/* Fallback sound only — used when the phone won't play its own alert
+   (notifications not allowed). When permission is granted, the
+   Notification's own sound is the ping (Dustin's ask, Nov 20). */
+function pingBeep(){
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!pingAudioCtx) pingAudioCtx = new AC();
+    const ctx = pingAudioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.35);
+  } catch(e){ /* sound is a bonus — never break the ping */ }
+}
+function fireReminderPing(t){
+  const msg = '🔔 Reminder for ' + memberLabel(t.who) + ': ' + t.text;
+  showPingToast(msg);
+  /* The ping sound is the phone's own alert sound: the Notification plays
+     it. The page beep only fires as a fallback when notifications aren't
+     allowed on this phone (Dustin's ask, Nov 20). */
+  if ('Notification' in window && Notification.permission === 'granted'){
+    try { new Notification('🔔 Reminder — ' + memberLabel(t.who), { body: t.text, tag: 'reminder-' + t.id, renotify: true }); } catch(e){ pingBeep(); }
+  } else {
+    pingBeep();
+  }
+  /* PHASE 2 (not built): a closed app can't run this. Closed-app pings need
+     FCM push to devices[t.who][i].token, sent by a scheduler at the due time. */
+}
+function checkReminders(){
+  if (!deviceIdentity || !deviceIdentity.person) return; /* this phone isn't registered */
+  const me = deviceIdentity.person;
+  const now = Date.now();
+  let fired = false;
+  for (const t of tasks){
+    if (!t.due || t.done || t.notified) continue;
+    if (new Date(t.due).getTime() > now) continue;
+    if (t.who !== me && t.who !== 'family') continue; /* only this phone's person (or Family) */
+    fireReminderPing(t);
+    t.notified = true;
+    fired = true;
+  }
+  if (fired){ save(LS.tasks, tasks); renderTasks(); }
+}
+function testPing(){
+  const msg = '🔔 Test ping' + (deviceIdentity && deviceIdentity.person ? ' for ' + memberLabel(deviceIdentity.person) : '') + ' — pings are working on this phone.';
+  showPingToast(msg);
+  if ('Notification' in window && Notification.permission === 'granted'){
+    try { new Notification('🔔 Test ping', { body: msg, tag: 'test-ping', renotify: true }); } catch(e){ pingBeep(); }
+  } else {
+    pingBeep();
+  }
+}
 
 /* ================= STICKY NOTES ================= */
 function memberLabel(k){ const m = MEMBERS[k]; return m ? m.label : (k ? k.charAt(0).toUpperCase() + k.slice(1) : 'Family'); }
@@ -1843,12 +2043,14 @@ function tickClock(){
 }
 
 /* ================= BOOT ================= */
-renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto(); renderCountdowns(); renderHurricane();
+renderCalendar(); renderTasks(); renderNotes(); renderLists(); renderMemberChips(); renderPhoto(); renderCountdowns(); renderHurricane(); renderDeviceStatus();
 loadWeather(); loadNews(); loadHurricane(); tickClock();
 setInterval(tickClock, 15000);
 setInterval(loadWeather, 15 * 60 * 1000);
 setInterval(loadNews, 10 * 60 * 1000);
 setInterval(loadHurricane, 15 * 60 * 1000);
+setInterval(checkReminders, 30000);
+checkReminders();
 </script>
 </body>
 </html>
