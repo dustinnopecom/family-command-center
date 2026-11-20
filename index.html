@@ -142,7 +142,17 @@
 @keyframes theme-leaf-fall { 0%{ top:-24px; transform:rotate(0deg) translateX(0); } 50%{ transform:rotate(170deg) translateX(16px); } 100%{ top:103%; transform:rotate(340deg) translateX(-8px); } }
 .theme-snow { position:absolute; top:-10px; border-radius:9999px; background:#fff; animation:theme-snow-fall linear infinite; }
 @keyframes theme-snow-fall { 0%{ top:-10px; transform:translateX(0); } 50%{ transform:translateX(12px); } 100%{ top:103%; transform:translateX(-6px); } }
-@media (prefers-reduced-motion: reduce) { .theme-leaf, .theme-snow, .theme-light { animation:none !important; } }
+.theme-spark { position:absolute; bottom:-10px; border-radius:9999px; animation:theme-spark-rise linear infinite; }
+@keyframes theme-spark-rise { 0%{ bottom:-10px; transform:translateX(0); opacity:0; } 15%{ opacity:.9; } 100%{ bottom:103%; transform:translateX(10px); opacity:0; } }
+.theme-confetti { position:absolute; top:-14px; animation:theme-confetti-fall linear infinite; }
+@keyframes theme-confetti-fall { 0%{ top:-14px; transform:rotate(0deg) translateX(0); } 100%{ top:103%; transform:rotate(540deg) translateX(-14px); } }
+.theme-petal { position:absolute; top:-16px; border-radius:60% 0 60% 0; opacity:.55; animation:theme-petal-fall linear infinite; }
+@keyframes theme-petal-fall { 0%{ top:-16px; transform:rotate(0deg) translateX(0); } 50%{ transform:rotate(160deg) translateX(18px); } 100%{ top:103%; transform:rotate(320deg) translateX(-6px); } }
+.theme-firefly { position:absolute; border-radius:9999px; background:#fde68a; box-shadow:0 0 6px 2px rgba(253,230,138,.8); animation:theme-firefly-drift ease-in-out infinite; }
+@keyframes theme-firefly-drift { 0%,100%{ transform:translate(0,0); opacity:.25; } 25%{ transform:translate(14px,-10px); opacity:1; } 50%{ transform:translate(-8px,-18px); opacity:.4; } 75%{ transform:translate(-16px,6px); opacity:.9; } }
+.theme-fog { position:absolute; border-radius:9999px; background:radial-gradient(ellipse at center, rgba(255,255,255,.5), rgba(255,255,255,0) 70%); filter:blur(6px); animation:theme-fog-drift linear infinite; }
+@keyframes theme-fog-drift { 0%{ left:-25%; } 100%{ left:105%; } }
+@media (prefers-reduced-motion: reduce) { .theme-leaf, .theme-snow, .theme-light, .theme-spark, .theme-confetti, .theme-petal, .theme-firefly, .theme-fog { animation:none !important; } }
 </style>
 <style>
 /* BAKED-IN Tailwind fallback — renders even when the Play CDN can't load */
@@ -1138,8 +1148,9 @@ const MONTHS = ['January','February','March','April','May','June','July','August
    #themeAnimLayer — absolute, pointer-events:none, z-index:0, behind the
    grid — so they never move, distort, or cover text or event blocks.
    Day cells keep their solid fills. prefers-reduced-motion turns the
-   animation off (see CSS). Nov + Dec 2026 are themed; other months get
-   the clean default (2027 themes planned with Dustin before made). */
+   animation off (see CSS). Nov + Dec 2026 and all of 2027 are themed
+   (2027 lineup planned with Dustin and approved Nov 20); other months
+   get the clean default. */
 const CAL_THEMES = {
   '2026-11': { name:'Thanksgiving', img:'theme-nov-2026.jpg', anim:'leaves',
                bg:'linear-gradient(180deg, #fff7ed 0%, #ffedd5 55%, #fffbeb 100%)',
@@ -1147,6 +1158,42 @@ const CAL_THEMES = {
   '2026-12': { name:'Christmas', img:'theme-dec-2026.jpg', anim:'snow',
                bg:'linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 55%, #fefce8 100%)',
                bannerBg:'linear-gradient(120deg,#14532d,#166534 55%,#991b1b)' },
+  '2027-1': { name:'New Year', img:'theme-jan-2027.jpg', anim:'sparks',
+               bg:'linear-gradient(180deg, #eff6ff 0%, #e0e7ff 55%, #fdf4ff 100%)',
+               bannerBg:'linear-gradient(120deg,#1e3a8a,#312e81 55%,#86198f)' },
+  '2027-2': { name:'Mardi Gras', img:'theme-feb-2027.jpg', anim:'confetti',
+               bg:'linear-gradient(180deg, #faf5ff 0%, #f3e8ff 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#581c87,#166534 55%,#a16207)' },
+  '2027-3': { name:'Spring', img:'theme-mar-2027.jpg', anim:'petals',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #dcfce7 55%, #fdf2f8 100%)',
+               bannerBg:'linear-gradient(120deg,#166534,#65a30d 55%,#f9a8d4)' },
+  '2027-4': { name:'Pond Season', img:'theme-apr-2027.jpg', anim:'petals',
+               bg:'linear-gradient(180deg, #ecfeff 0%, #dcfce7 55%, #fef9c3 100%)',
+               bannerBg:'linear-gradient(120deg,#0e7490,#15803d 55%,#f59e0b)' },
+  '2027-5': { name:"Mother's Day", img:'theme-may-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #fdf2f8 0%, #fce7f3 55%, #ede9fe 100%)',
+               bannerBg:'linear-gradient(120deg,#9d174d,#c026d3 55%,#7c3aed)' },
+  '2027-6': { name:'Summer', img:'theme-jun-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #fffbeb 0%, #fef3c7 55%, #ffedd5 100%)',
+               bannerBg:'linear-gradient(120deg,#b45309,#f59e0b 55%,#ea580c)' },
+  '2027-7': { name:'Wedding Month', img:'theme-jul-2027.jpg', anim:'sparks',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #ffedd5 55%, #fdf2f8 100%)',
+               bannerBg:'linear-gradient(120deg,#9a3412,#d97706 55%,#db2777)' },
+  '2027-8': { name:'Dog Days', img:'theme-aug-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 55%, #fef9c3 100%)',
+               bannerBg:'linear-gradient(120deg,#0369a1,#0ea5e9 55%,#65a30d)' },
+  '2027-9': { name:'Founder Day', img:'theme-sep-2027.jpg', anim:'confetti',
+               bg:'linear-gradient(180deg, #f5f3ff 0%, #ede9fe 55%, #fee2e2 100%)',
+               bannerBg:'linear-gradient(120deg,#0e7490,#111827 55%,#b91c1c)' },
+  '2027-10': { name:'Halloween', img:'theme-oct-2027.jpg', anim:'fog',
+               bg:'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 55%, #ede9fe 100%)',
+               bannerBg:'linear-gradient(120deg,#1e293b,#334155 55%,#581c87)' },
+  '2027-11': { name:'Thanksgiving', img:'theme-nov-2027.jpg', anim:'leaves',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #fed7aa 55%, #fef3c7 100%)',
+               bannerBg:'linear-gradient(120deg,#9a3412,#ea580c 55%,#f59e0b)' },
+  '2027-12': { name:'Christmas', img:'theme-dec-2027.jpg', anim:'snow',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #dcfce7 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#14532d,#15803d 55%,#b91c1c)' },
 };
 const CAL_THEME_DEFAULT = { name:'', img:'', anim:'none',
   bg:'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
@@ -1210,6 +1257,69 @@ function buildThemeAnim(t){
         d.style.animationDelay = (i * 0.13) + 's';
         lights.appendChild(d);
       }
+    }
+  } else if (t.anim === 'sparks'){
+    const colors = ['#fde68a','#ffffff','#f9a8d4','#93c5fd','#fbbf24'];
+    for (let i = 0; i < 18; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-spark';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.boxShadow = '0 0 6px 1px ' + colors[i % colors.length];
+      s.style.animationDuration = (4 + Math.random() * 4) + 's';
+      s.style.animationDelay = (-Math.random() * 6) + 's';
+      const sz = 2 + Math.random() * 3;
+      s.style.width = sz + 'px'; s.style.height = sz + 'px';
+      layer.appendChild(s);
+    }
+  } else if (t.anim === 'confetti'){
+    const colors = ['#7c3aed','#16a34a','#eab308','#ef4444','#f59e0b'];
+    for (let i = 0; i < 22; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-confetti';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (6 + Math.random() * 5) + 's';
+      s.style.animationDelay = (-Math.random() * 8) + 's';
+      s.style.width = (5 + Math.random() * 4) + 'px';
+      s.style.height = (8 + Math.random() * 6) + 'px';
+      layer.appendChild(s);
+    }
+  } else if (t.anim === 'petals'){
+    const colors = ['#fbcfe8','#ffffff','#ddd6fe','#fde68a'];
+    for (let i = 0; i < 14; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-petal';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (9 + Math.random() * 7) + 's';
+      s.style.animationDelay = (-Math.random() * 10) + 's';
+      const sz = 8 + Math.random() * 6;
+      s.style.width = sz + 'px'; s.style.height = sz + 'px';
+      layer.appendChild(s);
+    }
+  } else if (t.anim === 'fireflies'){
+    for (let i = 0; i < 16; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-firefly';
+      s.style.left = (Math.random() * 96) + '%';
+      s.style.top = (8 + Math.random() * 80) + '%';
+      s.style.animationDuration = (6 + Math.random() * 6) + 's';
+      s.style.animationDelay = (-Math.random() * 8) + 's';
+      const sz = 3 + Math.random() * 2;
+      s.style.width = sz + 'px'; s.style.height = sz + 'px';
+      layer.appendChild(s);
+    }
+  } else if (t.anim === 'fog'){
+    for (let i = 0; i < 5; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-fog';
+      s.style.top = (10 + Math.random() * 70) + '%';
+      s.style.width = (40 + Math.random() * 20) + '%';
+      s.style.height = (60 + Math.random() * 30) + 'px';
+      s.style.animationDuration = (40 + Math.random() * 30) + 's';
+      s.style.animationDelay = (-Math.random() * 40) + 's';
+      layer.appendChild(s);
     }
   }
 }
