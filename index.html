@@ -121,6 +121,28 @@
   mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite:exclude;
   animation:emerg-orbit 2.8s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .emerg-btn .beacon, .emerg-btn::after { animation:none; } }
+
+/* ---- Themed months (wall-calendar look) ----
+   Banner art + soft theme colors behind the grid; animation lives on a
+   background layer only (absolute, pointer-events:none, z-index:0) so it
+   never moves, distorts, or covers text or event blocks. Day cells keep
+   their solid fills (.cal-light .day-cell), so everything stays readable. */
+#calSection { position:relative; }
+.cal-themed { background: var(--cal-theme-bg, #ffffff) !important; }
+.theme-anim-layer { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; border-radius:16px; }
+.cal-content { position:relative; z-index:1; }
+.theme-banner { position:relative; border-radius:14px; overflow:hidden; margin-top:12px; height:150px; box-shadow:0 4px 18px rgba(0,0,0,.18); }
+.theme-banner img { width:100%; height:100%; object-fit:cover; display:block; }
+.theme-banner-title { position:absolute; left:16px; bottom:10px; color:#fff; font-size:28px; font-weight:800; letter-spacing:.5px; text-shadow:0 2px 10px rgba(0,0,0,.7); }
+.theme-banner-sub { position:absolute; left:16px; top:10px; color:#fff; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; text-shadow:0 1px 6px rgba(0,0,0,.7); }
+.theme-lights { position:absolute; left:0; right:0; top:0; height:18px; pointer-events:none; }
+.theme-light { position:absolute; width:7px; height:7px; border-radius:9999px; animation:theme-twinkle 1.6s ease-in-out infinite; }
+@keyframes theme-twinkle { 0%,100%{ opacity:1; box-shadow:0 0 8px 2px currentColor; } 50%{ opacity:.25; box-shadow:none; } }
+.theme-leaf { position:absolute; top:-24px; border-radius:2px 10px 2px 10px; opacity:.5; animation:theme-leaf-fall linear infinite; }
+@keyframes theme-leaf-fall { 0%{ top:-24px; transform:rotate(0deg) translateX(0); } 50%{ transform:rotate(170deg) translateX(16px); } 100%{ top:103%; transform:rotate(340deg) translateX(-8px); } }
+.theme-snow { position:absolute; top:-10px; border-radius:9999px; background:#fff; animation:theme-snow-fall linear infinite; }
+@keyframes theme-snow-fall { 0%{ top:-10px; transform:translateX(0); } 50%{ transform:translateX(12px); } 100%{ top:103%; transform:translateX(-6px); } }
+@media (prefers-reduced-motion: reduce) { .theme-leaf, .theme-snow, .theme-light { animation:none !important; } }
 </style>
 <style>
 /* BAKED-IN Tailwind fallback — renders even when the Play CDN can't load */
@@ -356,7 +378,9 @@ img{max-width:100%;}
   </section>
 
   <!-- ============ CALENDAR ============ -->
-  <section class="cal-light p-5 lg:col-span-2 rounded-2xl" style="background:#ffffff; border:1px solid #e5e7eb;">
+  <section id="calSection" class="cal-light p-5 lg:col-span-2 rounded-2xl" style="background:#ffffff; border:1px solid #e5e7eb;">
+    <div id="themeAnimLayer" class="theme-anim-layer"></div>
+    <div class="cal-content">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="panel-title text-3xl" style="color:var(--cyan);">📅 FAMILY CALENDAR</h2>
       <div class="cal-tools">
@@ -372,6 +396,15 @@ img{max-width:100%;}
         <button onclick="openEventModal()" class="tool-btn text-white" style="background:#d97706;">+ Add Event</button>
         <button onclick="openCalFullscreen()" class="tool-btn">⛶ Full Screen</button>
       </div>
+    </div>
+
+    <!-- Themed-month banner (wall-calendar picture area) -->
+    <div id="themeBanner" class="theme-banner">
+      <img id="themeBannerImg" src="" alt="" style="display:none;">
+      <div id="themeBannerFallback" style="position:absolute; inset:0; display:none;"></div>
+      <div id="themeBannerSub" class="theme-banner-sub">Gatlin Family Calendar</div>
+      <div id="themeBannerTitle" class="theme-banner-title"></div>
+      <div id="themeLights" class="theme-lights"></div>
     </div>
 
     <div id="sepBanner" class="hidden mt-3 rounded-lg px-4 py-2 text-sm font-semibold" style="background:linear-gradient(90deg, rgba(240,180,41,.25), rgba(255,43,43,.25)); border:1px solid #f0b429;">
@@ -395,6 +428,7 @@ img{max-width:100%;}
     </div>
     <div id="calGrid" class="grid grid-cols-7 gap-1.5 mt-1"></div>
     <div id="calAgenda" class="mt-3"></div>
+    </div>
   </section>
 
   <!-- ============ RIGHT COLUMN: WEATHER + TASKS ============ -->
@@ -1097,6 +1131,88 @@ function quickAdd(kind){
 
 /* ================= CALENDAR ================= */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ---------- Themed months (wall-calendar look) ----------
+   The theme follows the month being VIEWED (the cursor), so flipping to
+   December shows December's theme. Animation particles live on
+   #themeAnimLayer — absolute, pointer-events:none, z-index:0, behind the
+   grid — so they never move, distort, or cover text or event blocks.
+   Day cells keep their solid fills. prefers-reduced-motion turns the
+   animation off (see CSS). Nov + Dec 2026 are themed; other months get
+   the clean default (2027 themes planned with Dustin before made). */
+const CAL_THEMES = {
+  '2026-11': { name:'Thanksgiving', img:'theme-nov-2026.jpg', anim:'leaves',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #ffedd5 55%, #fffbeb 100%)',
+               bannerBg:'linear-gradient(120deg,#b45309,#f59e0b 55%,#fde68a)' },
+  '2026-12': { name:'Christmas', img:'theme-dec-2026.jpg', anim:'snow',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#14532d,#166534 55%,#991b1b)' },
+};
+const CAL_THEME_DEFAULT = { name:'', img:'', anim:'none',
+  bg:'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+  bannerBg:'linear-gradient(120deg,#0e7490,#25d0e8)' };
+function calendarThemeFor(d){
+  return CAL_THEMES[d.getFullYear() + '-' + (d.getMonth() + 1)] || CAL_THEME_DEFAULT;
+}
+let lastThemeKey = '';
+function applyCalendarTheme(){
+  const sec = $('calSection'); if (!sec) return;
+  const key = cursor.getFullYear() + '-' + (cursor.getMonth() + 1);
+  if (key === lastThemeKey) return; /* don't restart the animation on every render */
+  lastThemeKey = key;
+  const t = calendarThemeFor(cursor);
+  sec.style.setProperty('--cal-theme-bg', t.bg);
+  sec.classList.add('cal-themed');
+  const img = $('themeBannerImg'), fb = $('themeBannerFallback');
+  if (t.img){ img.src = t.img; img.style.display = 'block'; fb.style.display = 'none'; }
+  else { img.style.display = 'none'; fb.style.background = t.bannerBg; fb.style.display = 'block'; }
+  $('themeBannerTitle').textContent = MONTHS[cursor.getMonth()] + ' ' + cursor.getFullYear() + (t.name ? ' — ' + t.name : '');
+  buildThemeAnim(t);
+}
+function buildThemeAnim(t){
+  const layer = $('themeAnimLayer'); if (!layer) return;
+  layer.innerHTML = '';
+  const lights = $('themeLights'); if (lights) lights.innerHTML = '';
+  if (t.anim === 'leaves'){
+    const colors = ['#d97706','#f59e0b','#b45309','#fbbf24','#ea580c'];
+    for (let i = 0; i < 14; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-leaf';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (9 + Math.random() * 8) + 's';
+      s.style.animationDelay = (-Math.random() * 12) + 's';
+      const sz = 9 + Math.random() * 7;
+      s.style.width = sz + 'px'; s.style.height = sz + 'px';
+      layer.appendChild(s);
+    }
+  } else if (t.anim === 'snow'){
+    for (let i = 0; i < 26; i++){
+      const s = document.createElement('div');
+      s.className = 'theme-snow';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.animationDuration = (7 + Math.random() * 7) + 's';
+      s.style.animationDelay = (-Math.random() * 10) + 's';
+      const sz = 3 + Math.random() * 5;
+      s.style.width = sz + 'px'; s.style.height = sz + 'px';
+      s.style.opacity = (0.35 + Math.random() * 0.4).toFixed(2);
+      layer.appendChild(s);
+    }
+    if (lights){
+      const lc = ['#ef4444','#f59e0b','#22c55e','#3b82f6','#fde68a'];
+      for (let i = 0; i < 24; i++){
+        const d = document.createElement('div');
+        d.className = 'theme-light';
+        d.style.left = (2 + i * (96 / 23)) + '%';
+        d.style.top = (i % 2 ? 8 : 2) + 'px';
+        d.style.background = lc[i % lc.length];
+        d.style.color = lc[i % lc.length];
+        d.style.animationDelay = (i * 0.13) + 's';
+        lights.appendChild(d);
+      }
+    }
+  }
+}
 function setSeg(id, on){ const el = $(id); if (el) el.classList.toggle('active', on); }
 function setView(v){ view = v;
   setSeg('viewMonthBtn', v==='month'); setSeg('viewWeekBtn', v==='week'); setSeg('viewDayBtn', v==='day'); setSeg('viewScheduleBtn', v==='schedule');
@@ -1119,6 +1235,7 @@ function shiftCal(dir){
   renderCalendar();
 }
 function renderCalendar(){
+  applyCalendarTheme();
   renderMemberChips();
   renderCalInto($('calGrid'), $('calTitle'), $('sepBanner'), false);
   if (!$('calFullscreen').classList.contains('hidden'))
