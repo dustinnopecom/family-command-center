@@ -487,15 +487,20 @@ function renderTodayPanel(){
 
 /* ================= EVENT PICTURES (animated, TV only) =================
    Funny animated loops matched by event title keywords. Words are real
-   text over the video (never baked in). Private/medical/money/legal
-   events ALWAYS stay plain member-color cards. Unmatched events are
+   text over the video (never baked in). Private/medical/money events ALWAYS stay plain (lawyer/attorney
+   meetings animate per Dustin's Nov 21 call) member-color cards. Unmatched events are
    plain too until a loop is made for them. */
 const EVENT_MEDIA = [
   { keys: ['thanksgiving', 'turkey day'], video: 'tv-event-images/thanksgiving-animated-tv-loop.mp4', poster: 'tv-event-images/thanksgiving-poster.webp' },
   { keys: ['physical therapy', 'physiofit', 'rehab'], video: 'tv-event-images/pt-animated-tv-loop.mp4', poster: 'tv-event-images/pt-poster.webp' },
-  { keys: ['dog', 'play-doh', 'cookie-doh', 'astro-doh', 'astro', 'p-d-d', 'vet', 'groom'], video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' }
+  { keys: ['dog', 'play-doh', 'cookie-doh', 'astro-doh', 'astro', 'p-d-d', 'vet', 'groom'], video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' },
+  { keys: ['birthday', 'bday', 'b-day'], video: 'tv-event-images/birthday-animated-tv-loop.mp4', poster: 'tv-event-images/birthday-poster.webp' },
+  { keys: ['school', 'pickup', 'bus', 'class', 'teacher', 'homework', 'graduation'], video: 'tv-event-images/school-animated-tv-loop.mp4', poster: 'tv-event-images/school-poster.webp' },
+  { keys: ['christmas', 'xmas', 'santa'], video: 'tv-event-images/christmas-animated-tv-loop.mp4', poster: 'tv-event-images/christmas-poster.webp' },
+  { keys: ['party', 'celebration', 'get-together', 'get together', 'cookout', 'bbq', 'barbecue', 'boil'], video: 'tv-event-images/party-animated-tv-loop.mp4', poster: 'tv-event-images/party-poster.webp' },
+  { keys: ['lawyer', 'attorney', 'legal'], video: 'tv-event-images/lawyer-animated-tv-loop.mp4', poster: 'tv-event-images/lawyer-poster.webp' }
 ];
-const PRIVATE_KEYS = ['med', 'reading', 'blood pressure', 'weight', 'doctor', 'cardiolog', 'clinic', 'hospital', 'surgery', 'prescription', 'pharmacy', 'insurance', 'bill', 'payment', 'disability', 'attorney', 'lawyer', 'court', 'ssdi', 'medicare', 'medicaid'];
+const PRIVATE_KEYS = ['med', 'reading', 'blood pressure', 'weight', 'doctor', 'cardiolog', 'clinic', 'hospital', 'surgery', 'prescription', 'pharmacy', 'insurance', 'bill', 'payment', 'disability', 'court', 'ssdi', 'medicare', 'medicaid'];
 function eventMediaFor(title){
   const t = ' ' + String(title || '').toLowerCase() + ' ';
   if (/(^|[^a-z])pt([^a-z]|$)/.test(t)) return EVENT_MEDIA[1];
