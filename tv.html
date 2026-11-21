@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatlin Command Center TV</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body { background:#0b0b10; color:#f4f4f5; font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow:hidden; }
+  #shiftWrap { height:100%; display:flex; flex-direction:column; transition:transform 2s ease; }
+
+  /* ---- Header ---- */
+  header { display:flex; align-items:center; justify-content:space-between; padding:1.6vmin 3vmin 1vmin; gap:2vmin; }
+  .brand { font-weight:900; letter-spacing:.14em; font-size:2.6vmin; color:#fff; white-space:nowrap; }
+  .brand .g { color:#ff2b2b; }
+  .brand .sub { display:block; font-size:1.3vmin; letter-spacing:.3em; color:#25d0e8; font-weight:700; margin-top:.3vmin; }
+  .clockbox { text-align:right; }
+  #clock { font-size:6.2vmin; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+  #clock .ampm { font-size:2.4vmin; color:#a1a1aa; font-weight:700; }
+  #dateLine { font-size:2vmin; color:#d4d4d8; margin-top:.4vmin; }
+  #weatherMini { font-size:1.9vmin; color:#a5f3fc; margin-top:.3vmin; }
+
+  /* ---- Alert strip ---- */
+  #alertStrip { display:none; margin:0 3vmin; padding:1vmin 2vmin; border-radius:1vmin; background:#7f1d1d; border:1px solid #ef4444; color:#fecaca; font-size:2vmin; font-weight:700; }
+  #alertStrip.on { display:block; }
+
+  /* ---- Panels ---- */
+  #panelHost { flex:1; position:relative; margin:1.4vmin 3vmin 0; min-height:0; }
+  .panel { position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity 1.2s ease; display:flex; flex-direction:column; }
+  .panel.active { opacity:1; pointer-events:auto; }
+  .panel-title { font-size:3.4vmin; font-weight:800; letter-spacing:.06em; margin-bottom:1.6vmin; }
+  .panel-title .accent { color:#25d0e8; }
+
+  /* Calendar panel */
+  .cal-banner { position:relative; height:16vmin; border-radius:1.6vmin; overflow:hidden; margin-bottom:1.4vmin; background:#1c1c26; flex-shrink:0; }
+  .cal-banner img { width:100%; height:100%; object-fit:cover; display:block; }
+  .cal-banner .shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.55)); }
+  .cal-banner .btext { position:absolute; left:3vmin; bottom:1.6vmin; }
+  .cal-banner .bsub { font-size:1.5vmin; letter-spacing:.32em; font-weight:700; color:#a5f3fc; text-transform:uppercase; }
+  .cal-banner .btitle { font-size:4.4vmin; font-weight:900; line-height:1.05; text-shadow:0 2px 14px rgba(0,0,0,.7); }
+  .cal-wrap { position:relative; flex:1; min-height:0; border-radius:1.6vmin; overflow:hidden; }
+  .cal-anim { position:absolute; inset:0; pointer-events:none; z-index:0; }
+  .cal-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7, 1fr); grid-auto-rows:1fr; gap:.7vmin; height:100%; padding:.7vmin; }
+  .cal-dow { display:flex; align-items:center; justify-content:center; font-size:1.7vmin; font-weight:800; letter-spacing:.18em; color:#e4e4e7; background:rgba(11,11,16,.55); border-radius:.8vmin; }
+  .cal-cell { background:rgba(21,21,29,.92); border:1px solid #262633; border-radius:1vmin; padding:.8vmin; overflow:hidden; display:flex; flex-direction:column; gap:.5vmin; }
+  .cal-cell.blank { background:transparent; border-color:transparent; }
+  .cal-cell.today { border:2px solid #25d0e8; box-shadow:0 0 18px rgba(37,208,232,.35) inset; }
+  .cal-num { font-size:2.4vmin; font-weight:800; color:#fff; line-height:1; display:flex; justify-content:space-between; align-items:center; }
+  .cal-num .today-tag { font-size:1.2vmin; letter-spacing:.2em; color:#0b0b10; background:#25d0e8; border-radius:.6vmin; padding:.2vmin .8vmin; font-weight:900; }
+  .cal-evt { border-radius:.7vmin; padding:.35vmin .8vmin; font-size:1.55vmin; font-weight:700; color:#18181b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:.6vmin; }
+  .cal-evt .dot { width:1.1vmin; height:1.1vmin; border-radius:9999px; flex-shrink:0; }
+  .cal-more { font-size:1.4vmin; color:#a1a1aa; font-weight:700; }
+
+  /* Theme particles (same family as the main calendar) */
+  .theme-leaf { position:absolute; top:-20px; border-radius:60% 0 60% 0; opacity:.5; animation:tv-leaf-fall linear infinite; }
+  @keyframes tv-leaf-fall { 0%{ top:-20px; transform:rotate(0deg) translateX(0);} 50%{ transform:rotate(180deg) translateX(16px);} 100%{ top:103%; transform:rotate(340deg) translateX(-8px);} }
+  .theme-snow { position:absolute; top:-10px; border-radius:9999px; background:#fff; opacity:.85; animation:tv-snow-fall linear infinite; }
+  @keyframes tv-snow-fall { 0%{ top:-10px; transform:translateX(0);} 100%{ top:103%; transform:translateX(-12px);} }
+  .theme-spark { position:absolute; bottom:-10px; border-radius:9999px; animation:tv-spark-rise linear infinite; }
+  @keyframes tv-spark-rise { 0%{ bottom:-10px; transform:translateX(0); opacity:0;} 15%{ opacity:.9;} 100%{ bottom:103%; transform:translateX(10px); opacity:0;} }
+  .theme-confetti { position:absolute; top:-14px; animation:tv-confetti-fall linear infinite; }
+  @keyframes tv-confetti-fall { 0%{ top:-14px; transform:rotate(0deg) translateX(0);} 100%{ top:103%; transform:rotate(540deg) translateX(-14px);} }
+  .theme-petal { position:absolute; top:-16px; border-radius:60% 0 60% 0; opacity:.55; animation:tv-petal-fall linear infinite; }
+  @keyframes tv-petal-fall { 0%{ top:-16px; transform:rotate(0deg) translateX(0);} 50%{ transform:rotate(160deg) translateX(18px);} 100%{ top:103%; transform:rotate(320deg) translateX(-6px);} }
+  .theme-firefly { position:absolute; border-radius:9999px; background:#fde68a; box-shadow:0 0 6px 2px rgba(253,230,138,.8); animation:tv-firefly-drift ease-in-out infinite; }
+  @keyframes tv-firefly-drift { 0%,100%{ transform:translate(0,0); opacity:.25;} 25%{ transform:translate(14px,-10px); opacity:1;} 50%{ transform:translate(-8px,-18px); opacity:.4;} 75%{ transform:translate(-16px,6px); opacity:.9;} }
+  .theme-fog { position:absolute; border-radius:9999px; background:radial-gradient(ellipse at center, rgba(255,255,255,.5), rgba(255,255,255,0) 70%); filter:blur(6px); animation:tv-fog-drift linear infinite; }
+  @keyframes tv-fog-drift { 0%{ left:-25%;} 100%{ left:105%;} }
+  @media (prefers-reduced-motion: reduce) { .theme-leaf, .theme-snow, .theme-spark, .theme-confetti, .theme-petal, .theme-firefly, .theme-fog { animation:none !important; } }
+
+  /* Agenda / lists */
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:2.4vmin; flex:1; min-height:0; }
+  .col-card { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.2vmin; overflow:hidden; display:flex; flex-direction:column; }
+  .col-head { font-size:2.8vmin; font-weight:900; margin-bottom:1.4vmin; }
+  .col-head .dow { color:#25d0e8; }
+  .evt-row { display:flex; align-items:center; gap:1.6vmin; padding:1.1vmin 1.4vmin; border-radius:1vmin; margin-bottom:1vmin; color:#18181b; font-weight:700; }
+  .evt-row .when { font-size:1.9vmin; font-weight:900; white-space:nowrap; min-width:13vmin; }
+  .evt-row .what { font-size:2.2vmin; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .evt-row .who { font-size:1.5vmin; font-weight:900; letter-spacing:.08em; text-transform:uppercase; background:rgba(0,0,0,.18); border-radius:.7vmin; padding:.3vmin 1vmin; white-space:nowrap; }
+  .empty-note { font-size:2.2vmin; color:#a1a1aa; padding:1vmin 0; }
+  .rem-head { font-size:2.2vmin; font-weight:900; letter-spacing:.1em; color:#fbbf24; margin:1.2vmin 0 1vmin; }
+  .rem-row { display:flex; align-items:center; gap:1.4vmin; background:#1b1b26; border:1px solid #2c2c3a; border-radius:1vmin; padding:1vmin 1.4vmin; margin-bottom:.9vmin; font-size:2vmin; font-weight:600; }
+  .rem-row .dot { width:1.4vmin; height:1.4vmin; border-radius:9999px; flex-shrink:0; }
+  .rem-row .due { margin-left:auto; font-size:1.7vmin; color:#a1a1aa; white-space:nowrap; }
+  .rem-row.overdue { border-color:#ef4444; }
+  .rem-row.overdue .due { color:#fca5a5; font-weight:800; }
+
+  /* Countdowns */
+  .cd-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:2vmin; flex:1; min-height:0; align-content:start; overflow:hidden; }
+  .cd-card { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.4vmin; display:flex; align-items:center; gap:2.4vmin; }
+  .cd-days { text-align:center; min-width:16vmin; }
+  .cd-days .n { font-size:7vmin; font-weight:900; line-height:1; color:#25d0e8; }
+  .cd-days .u { font-size:1.6vmin; letter-spacing:.24em; color:#a1a1aa; font-weight:800; }
+  .cd-days .special { font-size:3.4vmin; font-weight:900; color:#4ade80; line-height:1.1; }
+  .cd-title { font-size:2.7vmin; font-weight:800; line-height:1.2; }
+  .cd-date { font-size:1.8vmin; color:#a1a1aa; margin-top:.6vmin; }
+
+  /* Weather */
+  .wx-main { display:grid; grid-template-columns:1.4fr 1fr; gap:2.4vmin; flex:1; min-height:0; }
+  .wx-card { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.6vmin; display:flex; flex-direction:column; }
+  .wx-place { font-size:2.4vmin; font-weight:900; letter-spacing:.08em; }
+  .wx-temp { font-size:11vmin; font-weight:900; line-height:1; margin:1vmin 0; }
+  .wx-cond { font-size:3vmin; font-weight:700; }
+  .wx-meta { font-size:2.1vmin; color:#a1a1aa; margin-top:1vmin; }
+  .wx-low { font-size:2.6vmin; font-weight:800; margin-top:1.6vmin; }
+  .wx-low .n { color:#93c5fd; }
+  .freeze-box { margin-top:1.6vmin; background:#1e3a8a; border:1px solid #3b82f6; color:#dbeafe; border-radius:1.2vmin; padding:1.6vmin; font-size:2.1vmin; font-weight:700; line-height:1.45; }
+  .wx-days { display:flex; gap:1.4vmin; margin-top:auto; padding-top:2vmin; }
+  .wx-day { flex:1; text-align:center; background:#1b1b26; border-radius:1.2vmin; padding:1.4vmin .6vmin; }
+  .wx-day .d { font-size:1.7vmin; font-weight:900; letter-spacing:.16em; color:#a1a1aa; }
+  .wx-day .i { font-size:3.4vmin; margin:.6vmin 0; }
+  .wx-day .t { font-size:2vmin; font-weight:800; }
+
+  /* Family news */
+  .news-cols { display:grid; grid-template-columns:1.2fr 1fr; gap:2.4vmin; flex:1; min-height:0; }
+  .notes-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:1.6vmin; align-content:start; overflow:hidden; }
+  .notes-grid.wide { grid-template-columns:repeat(3, 1fr); flex:1; min-height:0; }
+  .sticky { border-radius:1.2vmin; padding:1.8vmin; color:#18181b; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+  .sticky .txt { font-size:2.2vmin; font-weight:700; line-height:1.35; }
+  .sticky .meta { font-size:1.5vmin; font-weight:800; opacity:.65; margin-top:1vmin; text-transform:uppercase; letter-spacing:.08em; }
+  .headlines { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.2vmin; overflow:hidden; }
+  .headlines .h { font-size:2.2vmin; font-weight:900; letter-spacing:.12em; color:#25d0e8; margin-bottom:1.4vmin; }
+  .headlines.full { flex:1; min-height:0; }
+  .headlines.full .headline { font-size:2.7vmin; padding:1.4vmin 0; }
+  .headline { font-size:2.1vmin; font-weight:600; line-height:1.4; padding:1vmin 0; border-bottom:1px solid #262633; }
+  .headline:last-child { border-bottom:none; }
+
+  /* Photo */
+  .photo-wrap { position:relative; flex:1; min-height:0; border-radius:1.6vmin; overflow:hidden; background:#14141d; }
+  .photo-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-cap { position:absolute; left:0; right:0; bottom:0; padding:3vmin; background:linear-gradient(180deg, transparent, rgba(0,0,0,.75)); font-size:3vmin; font-weight:800; }
+
+  /* Dots + ticker */
+  #dots { display:flex; justify-content:center; gap:1.2vmin; padding:1.4vmin 0 .6vmin; }
+  #dots .d { width:1.3vmin; height:1.3vmin; border-radius:9999px; background:#3f3f46; transition:background .4s; }
+  #dots .d.on { background:#25d0e8; }
+  footer { border-top:1px solid #262633; overflow:hidden; white-space:nowrap; padding:1vmin 0; }
+  .ticker-track { display:flex; width:max-content; animation:tv-ticker 90s linear infinite; gap:4vmin; padding:0 2vmin; font-size:1.9vmin; color:#e4e4e7; align-items:center; }
+  @keyframes tv-ticker { 0%{ transform:translateX(0);} 100%{ transform:translateX(-50%);} }
+  .ticker-track .alert { color:#f87171; font-weight:800; }
+  .ticker-track .sep { color:#52525b; }
+  #pausedTag { display:none; position:fixed; top:2vmin; right:3vmin; background:#f59e0b; color:#18181b; font-weight:900; font-size:1.6vmin; letter-spacing:.14em; border-radius:.8vmin; padding:.6vmin 1.4vmin; z-index:50; }
+  #pausedTag.on { display:block; }
+</style>
+</head>
+<body>
+<div id="shiftWrap">
+  <header>
+    <div class="brand"><span class="g">G</span>ATLIN COMMAND CENTER<span class="sub">📺 TV CHANNEL</span></div>
+    <div class="clockbox">
+      <div id="clock">--:-- <span class="ampm"></span></div>
+      <div id="dateLine"></div>
+      <div id="weatherMini"></div>
+    </div>
+  </header>
+  <div id="alertStrip"></div>
+  <main id="panelHost"></main>
+  <div id="dots"></div>
+  <footer><div id="tickerTrack" class="ticker-track"></div></footer>
+</div>
+<div id="pausedTag">PAUSED</div>
+<script>
+/* ================= TV DISPLAY MODE =================
+   Read-only rotating display for TVs and any screen left on for long
+   stretches. Reads the same Firebase doc as the main command center
+   (family/state) and rotates: Calendar → Today → Countdowns → Weather
+   → Family News → Photo. Panels with nothing to show are skipped.
+   Arrow keys / tap advance; space pauses. A slow pixel-shift keeps
+   the picture from sitting perfectly still (burn-in protection). */
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBwYDIS0okZ3trsf_jANsb3k3zuIgk1OzA",
+  authDomain: "gatlin-family-command-center.firebaseapp.com",
+  projectId: "gatlin-family-command-center",
+  storageBucket: "gatlin-family-command-center.firebasestorage.app",
+  messagingSenderId: "820413309064",
+  appId: "1:820413309064:web:bc3507cbf090602637ff3d"
+};
+const PREVIEW_IMAGES = {}; /* preview builds inline images here */
+
+const MEMBERS = {
+  dustin: { label: 'Dustin',  color: '#ff2b2b' },
+  hannah: { label: 'Hannah',  color: '#25d0e8' },
+  harley: { label: 'Harley',  color: '#a78bfa' },
+  dogs:   { label: 'Dogs',    color: '#4ade80' },
+  family: { label: 'Family',  color: '#e5e5e5' }
+};
+function memberBg(who){
+  return { dustin:'#fecaca', hannah:'#a5f3fc', harley:'#ddd6fe', dogs:'#bbf7d0', family:'#e5e7eb' }[who] || '#e5e7eb';
+}
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const dstr = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+const todayStr = () => dstr(new Date());
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatTime(t){
+  if (!t) return '';
+  const parts = String(t).split(':');
+  let h = parseInt(parts[0], 10);
+  const m = parts[1] || '00';
+  if (isNaN(h)) return '';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return h + ':' + m + ' ' + ampm;
+}
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+/* ---- Synced state (read-only mirror of the main app) ---- */
+let events = [], tasks = [], notes = [], countdowns = [], caption = '';
+let weatherData = null, headlines = [], alerts = [];
+let syncReady = false;
+
+function eventsOn(dateStr){
+  const out = [];
+  const d = new Date(dateStr + 'T12:00:00');
+  const md = pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  for (const e of events){
+    if (e.date === dateStr) out.push(e);
+    else if (e.yearly && e.date && e.date.slice(5) === md) out.push(e);
+  }
+  return out;
+}
+function countdownTarget(c){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (c.yearly && c.month){
+    let d = new Date(now.getFullYear(), (c.month || 12) - 1, c.day || 25, 12);
+    if (d < today) d = new Date(now.getFullYear() + 1, (c.month || 12) - 1, c.day || 25, 12);
+    return d;
+  }
+  return new Date(c.date + 'T12:00:00');
+}
+function daysUntil(d){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((t - today) / 86400000);
+}
+function fmtCdDate(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function imgSrc(name){ return PREVIEW_IMAGES[name] || name; }
+
+/* ---- Firebase (read-only) ---- */
+(function initSync(){
+  try {
+    if (typeof firebase === 'undefined') return;
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.firestore();
+    firebase.auth().signInAnonymously().then(function(){
+      db.collection('family').doc('state').onSnapshot(function(snap){
+        if (!snap.exists) return;
+        const s = snap.data() || {};
+        if (Array.isArray(s.events)) events = s.events;
+        if (Array.isArray(s.tasks)) tasks = s.tasks;
+        if (Array.isArray(s.notes)) notes = s.notes;
+        if (Array.isArray(s.countdowns)) countdowns = s.countdowns;
+        caption = s.caption || '';
+        syncReady = true;
+        renderAll();
+      }, function(err){ console.warn('tv sync listen failed', err); });
+    }).catch(function(err){ console.warn('tv sign-in failed', err); });
+  } catch(e){ console.warn('tv sync init failed', e); }
+})();
+
+/* ---- Themed calendar (same themes as the main app) ---- */
+const CAL_THEMES = {
+  '2026-11': { name:'Thanksgiving', img:'theme-nov-2026.jpg', anim:'leaves',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #ffedd5 55%, #fffbeb 100%)',
+               bannerBg:'linear-gradient(120deg,#b45309,#f59e0b 55%,#fde68a)' },
+  '2026-12': { name:'Christmas', img:'theme-dec-2026.jpg', anim:'snow',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#14532d,#166534 55%,#991b1b)' },
+  '2027-1': { name:'New Year', img:'theme-jan-2027.jpg', anim:'sparks',
+               bg:'linear-gradient(180deg, #eff6ff 0%, #e0e7ff 55%, #fdf4ff 100%)',
+               bannerBg:'linear-gradient(120deg,#1e3a8a,#312e81 55%,#86198f)' },
+  '2027-2': { name:'Mardi Gras', img:'theme-feb-2027.jpg', anim:'confetti',
+               bg:'linear-gradient(180deg, #faf5ff 0%, #f3e8ff 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#581c87,#166534 55%,#a16207)' },
+  '2027-3': { name:'Spring', img:'theme-mar-2027.jpg', anim:'petals',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #dcfce7 55%, #fdf2f8 100%)',
+               bannerBg:'linear-gradient(120deg,#166534,#65a30d 55%,#f9a8d4)' },
+  '2027-4': { name:'Pond Season', img:'theme-apr-2027.jpg', anim:'petals',
+               bg:'linear-gradient(180deg, #ecfeff 0%, #dcfce7 55%, #fef9c3 100%)',
+               bannerBg:'linear-gradient(120deg,#0e7490,#15803d 55%,#f59e0b)' },
+  '2027-5': { name:"Mother's Day", img:'theme-may-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #fdf2f8 0%, #fce7f3 55%, #ede9fe 100%)',
+               bannerBg:'linear-gradient(120deg,#9d174d,#c026d3 55%,#7c3aed)' },
+  '2027-6': { name:'Summer', img:'theme-jun-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #fffbeb 0%, #fef3c7 55%, #ffedd5 100%)',
+               bannerBg:'linear-gradient(120deg,#b45309,#f59e0b 55%,#ea580c)' },
+  '2027-7': { name:'Wedding Month', img:'theme-jul-2027.jpg', anim:'sparks',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #ffedd5 55%, #fdf2f8 100%)',
+               bannerBg:'linear-gradient(120deg,#9a3412,#d97706 55%,#db2777)' },
+  '2027-8': { name:'Dog Days', img:'theme-aug-2027.jpg', anim:'fireflies',
+               bg:'linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 55%, #fef9c3 100%)',
+               bannerBg:'linear-gradient(120deg,#0369a1,#0ea5e9 55%,#65a30d)' },
+  '2027-9': { name:'Founder Day', img:'theme-sep-2027.jpg', anim:'confetti',
+               bg:'linear-gradient(180deg, #f5f3ff 0%, #ede9fe 55%, #fee2e2 100%)',
+               bannerBg:'linear-gradient(120deg,#0e7490,#111827 55%,#b91c1c)' },
+  '2027-10': { name:'Halloween', img:'theme-oct-2027.jpg', anim:'fog',
+               bg:'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 55%, #ede9fe 100%)',
+               bannerBg:'linear-gradient(120deg,#1e293b,#334155 55%,#581c87)' },
+  '2027-11': { name:'Thanksgiving', img:'theme-nov-2027.jpg', anim:'leaves',
+               bg:'linear-gradient(180deg, #fff7ed 0%, #fed7aa 55%, #fef3c7 100%)',
+               bannerBg:'linear-gradient(120deg,#9a3412,#ea580c 55%,#f59e0b)' },
+  '2027-12': { name:'Christmas', img:'theme-dec-2027.jpg', anim:'snow',
+               bg:'linear-gradient(180deg, #f0fdf4 0%, #dcfce7 55%, #fefce8 100%)',
+               bannerBg:'linear-gradient(120deg,#14532d,#15803d 55%,#b91c1c)' },
+};
+const CAL_THEME_DEFAULT = { name:'', img:'', anim:'none',
+  bg:'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+  bannerBg:'linear-gradient(120deg,#0e7490,#25d0e8)' };
+function calendarThemeFor(d){
+  return CAL_THEMES[d.getFullYear() + '-' + (d.getMonth() + 1)] || CAL_THEME_DEFAULT;
+}
+function buildThemeAnim(layer, t){
+  if (!layer) return;
+  layer.innerHTML = '';
+  if (!t || t.anim === 'none') return;
+  const add = (cls, count, fn) => {
+    for (let i = 0; i < count; i++){
+      const s = document.createElement('div');
+      s.className = cls; fn(s, i); layer.appendChild(s);
+    }
+  };
+  if (t.anim === 'leaves'){
+    const colors = ['#f59e0b','#ea580c','#dc2626','#eab308','#b45309'];
+    add('theme-leaf', 14, (s,i) => {
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (9 + Math.random() * 7) + 's';
+      s.style.animationDelay = (-Math.random() * 10) + 's';
+      const sz = 9 + Math.random() * 7; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+    });
+  } else if (t.anim === 'snow'){
+    add('theme-snow', 26, s => {
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.animationDuration = (7 + Math.random() * 6) + 's';
+      s.style.animationDelay = (-Math.random() * 8) + 's';
+      const sz = 3 + Math.random() * 4; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+    });
+  } else if (t.anim === 'sparks'){
+    const colors = ['#fde68a','#ffffff','#f9a8d4','#93c5fd','#fbbf24'];
+    add('theme-spark', 18, (s,i) => {
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.boxShadow = '0 0 6px 1px ' + colors[i % colors.length];
+      s.style.animationDuration = (4 + Math.random() * 4) + 's';
+      s.style.animationDelay = (-Math.random() * 6) + 's';
+      const sz = 2 + Math.random() * 3; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+    });
+  } else if (t.anim === 'confetti'){
+    const colors = ['#7c3aed','#16a34a','#eab308','#ef4444','#f59e0b'];
+    add('theme-confetti', 22, (s,i) => {
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (6 + Math.random() * 5) + 's';
+      s.style.animationDelay = (-Math.random() * 8) + 's';
+      s.style.width = (5 + Math.random() * 4) + 'px'; s.style.height = (8 + Math.random() * 6) + 'px';
+    });
+  } else if (t.anim === 'petals'){
+    const colors = ['#fbcfe8','#ffffff','#ddd6fe','#fde68a'];
+    add('theme-petal', 14, (s,i) => {
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (9 + Math.random() * 7) + 's';
+      s.style.animationDelay = (-Math.random() * 10) + 's';
+      const sz = 8 + Math.random() * 6; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+    });
+  } else if (t.anim === 'fireflies'){
+    add('theme-firefly', 16, s => {
+      s.style.left = (Math.random() * 96) + '%';
+      s.style.top = (8 + Math.random() * 80) + '%';
+      s.style.animationDuration = (6 + Math.random() * 6) + 's';
+      s.style.animationDelay = (-Math.random() * 8) + 's';
+      const sz = 3 + Math.random() * 2; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+    });
+  } else if (t.anim === 'fog'){
+    add('theme-fog', 5, s => {
+      s.style.top = (10 + Math.random() * 70) + '%';
+      s.style.width = (40 + Math.random() * 20) + '%';
+      s.style.height = (60 + Math.random() * 30) + 'px';
+      s.style.animationDuration = (40 + Math.random() * 30) + 's';
+      s.style.animationDelay = (-Math.random() * 40) + 's';
+    });
+  }
+}
+
+/* ================= PANELS ================= */
+function renderCalendarPanel(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const t = calendarThemeFor(now);
+  const first = new Date(y, m, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const tStr = todayStr();
+  let cells = ['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => '<div class="cal-dow">' + d + '</div>').join('');
+  for (let i = 0; i < startDow; i++) cells += '<div class="cal-cell blank"></div>';
+  for (let day = 1; day <= daysInMonth; day++){
+    const ds = y + '-' + pad(m + 1) + '-' + pad(day);
+    const evs = eventsOn(ds);
+    const shown = evs.slice(0, 3);
+    let inner = '<div class="cal-num"><span>' + day + '</span>' + (ds === tStr ? '<span class="today-tag">TODAY</span>' : '') + '</div>';
+    for (const e of shown){
+      const mem = MEMBERS[e.who] || MEMBERS.family;
+      const label = (e.time ? formatTime(e.time) + ' ' : '') + e.title;
+      inner += '<div class="cal-evt" style="background:' + memberBg(e.who) + ';"><span class="dot" style="background:' + mem.color + '"></span>' + esc(label) + '</div>';
+    }
+    if (evs.length > shown.length) inner += '<div class="cal-more">+' + (evs.length - shown.length) + ' more</div>';
+    cells += '<div class="cal-cell' + (ds === tStr ? ' today' : '') + '">' + inner + '</div>';
+  }
+  const title = MONTHS[m] + ' ' + y + (t.name ? ' — ' + t.name : '');
+  const banner = t.img
+    ? '<img src="' + imgSrc(t.img) + '" alt="">'
+    : '';
+  return '<div class="cal-banner" style="background:' + (t.bannerBg || '#1c1c26') + ';">' + banner +
+    '<div class="shade"></div><div class="btext"><div class="bsub">Gatlin Family Calendar</div>' +
+    '<div class="btitle">' + esc(title) + '</div></div></div>' +
+    '<div class="cal-wrap" style="background:' + (t.bg || '#14141d') + ';">' +
+    '<div class="cal-anim" id="tvAnimLayer"></div><div class="cal-grid">' + cells + '</div></div>';
+}
+
+function agendaRows(dateStr){
+  const evs = eventsOn(dateStr).slice().sort((a, b) => {
+    if (a.time && b.time) return a.time < b.time ? -1 : 1;
+    if (a.time) return -1;
+    if (b.time) return 1;
+    return 0;
+  });
+  if (!evs.length) return '<div class="empty-note">Nothing on the calendar.</div>';
+  return evs.map(e => {
+    const mem = MEMBERS[e.who] || MEMBERS.family;
+    return '<div class="evt-row" style="background:' + memberBg(e.who) + ';">' +
+      '<span class="when">' + (e.time ? formatTime(e.time) : 'All day') + '</span>' +
+      '<span class="what">' + esc(e.title) + '</span>' +
+      '<span class="who">' + mem.label + '</span></div>';
+  }).join('');
+}
+function reminderRows(){
+  const now = new Date();
+  const soon = tasks.filter(t => !t.done && t.due).map(t => ({ t, d: new Date(t.due) }))
+    .filter(x => !isNaN(x.d))
+    .sort((a, b) => a.d - b.d)
+    .filter(x => daysUntil(x.d) <= 1)
+    .slice(0, 5);
+  if (!soon.length) return '';
+  let html = '<div class="rem-head">⏰ REMINDERS</div>';
+  for (const x of soon){
+    const mem = MEMBERS[x.t.who] || MEMBERS.family;
+    const du = daysUntil(x.d);
+    const when = du < 0 ? 'Overdue' : du === 0 ? 'Today ' + formatTime(pad(x.d.getHours()) + ':' + pad(x.d.getMinutes()))
+      : 'Tomorrow ' + formatTime(pad(x.d.getHours()) + ':' + pad(x.d.getMinutes()));
+    html += '<div class="rem-row' + (du < 0 ? ' overdue' : '') + '"><span class="dot" style="background:' + mem.color + '"></span>' +
+      '<span>' + esc(x.t.text) + '</span><span class="due">' + when + '</span></div>';
+  }
+  return html;
+}
+function renderTodayPanel(){
+  const now = new Date();
+  const tom = new Date(now); tom.setDate(tom.getDate() + 1);
+  const head = d => '<span class="dow">' + DAYS[d.getDay()] + '</span> ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
+  return '<div class="panel-title">📅 <span class="accent">Today</span> &amp; Tomorrow</div>' +
+    '<div class="cols">' +
+      '<div class="col-card"><div class="col-head">' + head(now) + '</div>' + agendaRows(todayStr()) + reminderRows() + '</div>' +
+      '<div class="col-card"><div class="col-head">' + head(tom) + '</div>' + agendaRows(dstr(tom)) + '</div>' +
+    '</div>';
+}
+
+function renderCountdownPanel(){
+  const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
+    .filter(r => !(r.days < 0 && !r.c.release)) /* passed non-releases stay off the TV */
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 6);
+  if (!rows.length) return '';
+  const cards = rows.map(r => {
+    const daysHtml = r.days > 0
+      ? '<div class="cd-days"><div class="n">' + r.days + '</div><div class="u">' + (r.days === 1 ? 'DAY' : 'DAYS') + '</div></div>'
+      : r.days === 0
+      ? '<div class="cd-days"><div class="special">Today! 🎉</div></div>'
+      : '<div class="cd-days"><div class="special">Out now! 🎵</div></div>';
+    return '<div class="cd-card">' + daysHtml +
+      '<div><div class="cd-title">' + esc(r.c.title) + '</div>' +
+      '<div class="cd-date">' + fmtCdDate(r.target) + (r.c.yearly ? ' • every year' : '') + '</div></div></div>';
+  }).join('');
+  return '<div class="panel-title">⏳ Counting <span class="accent">Down</span></div><div class="cd-grid">' + cards + '</div>';
+}
+
+/* ================= WEATHER ================= */
+const WCODE = { 0:['☀️','Clear'], 1:['🌤️','Mostly clear'], 2:['⛅','Partly cloudy'], 3:['☁️','Overcast'],
+  45:['🌫️','Foggy'], 48:['🌫️','Foggy'], 51:['🌦️','Light drizzle'], 53:['🌦️','Drizzle'], 55:['🌦️','Drizzle'],
+  61:['🌧️','Light rain'], 63:['🌧️','Rain'], 65:['🌧️','Heavy rain'], 66:['🌧️','Freezing rain'], 67:['🌧️','Freezing rain'],
+  71:['🌨️','Light snow'], 73:['🌨️','Snow'], 75:['🌨️','Heavy snow'], 77:['🌨️','Snow grains'],
+  80:['🌧️','Rain showers'], 81:['🌧️','Rain showers'], 82:['🌧️','Heavy showers'],
+  85:['🌨️','Snow showers'], 86:['🌨️','Snow showers'], 95:['⛈️','Thunderstorms'], 96:['⛈️','Storms + hail'], 99:['⛈️','Storms + hail'] };
+const PLACES = [ { name:'Lockport', lat:29.98, lon:-90.79 }, { name:'Thibodaux', lat:29.80, lon:-90.82 } ];
+async function loadWeather(){
+  try {
+    const rows = await Promise.all(PLACES.map(async p => {
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon +
+        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=4';
+      const r = await fetch(url); const j = await r.json();
+      return { p, j };
+    }));
+    weatherData = rows;
+    const c = rows[0].j.current, w = WCODE[c.weather_code] || ['🌤️','—'];
+    $('weatherMini').textContent = 'Lockport: ' + Math.round(c.temperature_2m) + '°F ' + w[1];
+    renderAll();
+  } catch(e){ /* weather optional */ }
+}
+function wxCard(row, big){
+  const c = row.j.current, w = WCODE[c.weather_code] || ['🌤️','—'];
+  const tonightLow = Math.round(row.j.daily.temperature_2m_min[0]);
+  let html = '<div class="wx-card"><div class="wx-place">' + row.p.name + ', LA</div>' +
+    '<div class="wx-temp">' + w[0] + ' ' + Math.round(c.temperature_2m) + '°F</div>' +
+    '<div class="wx-cond">' + w[1] + '</div>' +
+    '<div class="wx-meta">Humidity ' + c.relative_humidity_2m + '% • Wind ' + Math.round(c.wind_speed_10m) + ' mph</div>' +
+    '<div class="wx-low">Tonight\'s low: <span class="n">' + tonightLow + '°F</span></div>';
+  if (big && tonightLow <= 32){
+    html += '<div class="freeze-box">🥶 HARD FREEZE TONIGHT — pond shutdown: unplug the pumps, drain the canister + hoses, bubble walls stay running.</div>';
+  }
+  html += '<div class="wx-days">' + row.j.daily.time.slice(1).map((d, i) => {
+    const dw = WCODE[row.j.daily.weather_code[i+1]] || ['—','—'];
+    const dt = new Date(d + 'T12:00:00');
+    return '<div class="wx-day"><div class="d">' + ['SUN','MON','TUE','WED','THU','FRI','SAT'][dt.getDay()] + '</div>' +
+      '<div class="i">' + dw[0] + '</div><div class="t">' + Math.round(row.j.daily.temperature_2m_max[i+1]) + '° / ' + Math.round(row.j.daily.temperature_2m_min[i+1]) + '°</div></div>';
+  }).join('') + '</div></div>';
+  return html;
+}
+function renderWeatherPanel(){
+  if (!weatherData || !weatherData.length) return '';
+  return '<div class="panel-title">🌤️ Local <span class="accent">Weather</span></div>' +
+    '<div class="wx-main">' + wxCard(weatherData[0], true) + (weatherData[1] ? wxCard(weatherData[1], false) : '') + '</div>';
+}
+
+/* ================= NEWS + ALERTS ================= */
+async function loadNews(){
+  alerts = []; headlines = [];
+  try {
+    const r = await fetch('https://api.weather.gov/alerts/active?area=LA&status=actual', { headers:{ 'Accept':'application/geo+json' } });
+    const j = await r.json();
+    (j.features || []).slice(0, 3).forEach(f => {
+      alerts.push('⚠️ ' + f.properties.event + ': ' + (f.properties.headline || f.properties.areaDesc || ''));
+    });
+  } catch(e){ /* alerts optional */ }
+  try {
+    const rss = encodeURIComponent('https://news.google.com/rss/search?q=Louisiana&hl=en-US&gl=US&ceid=US:en');
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + rss);
+    const j = await r.json();
+    (j.items || []).slice(0, 10).forEach(it => headlines.push(it.title));
+  } catch(e){ /* news optional */ }
+  renderTicker();
+  renderAll();
+}
+function renderTicker(){
+  const track = $('tickerTrack');
+  const items = [];
+  alerts.forEach(a => items.push('<span class="alert">' + esc(a) + '</span>'));
+  headlines.forEach(h => items.push('<span>' + esc(h) + '</span>'));
+  if (!items.length) items.push('<span>Welcome to the Gatlin Family Command Center</span>');
+  const chunk = items.map(i => i + '<span class="sep">///</span>').join('');
+  track.innerHTML = chunk + chunk;
+  const strip = $('alertStrip');
+  if (alerts.length){ strip.textContent = alerts[0]; strip.className = 'on'; }
+  else { strip.className = ''; strip.textContent = ''; }
+}
+
+/* ================= MESSAGE BOARD + NEWS (separate slots) ================= */
+function renderBoardPanel(){
+  const shownNotes = notes.slice(0, 9);
+  if (!shownNotes.length) return '';
+  const notesHtml = '<div class="notes-grid wide">' + shownNotes.map(n => {
+    const rot = (typeof n.rot === 'number' ? n.rot : 0);
+    const meta = [n.from ? 'From ' + n.from : '', n.to && n.to !== 'family' ? 'To ' + n.to : ''].filter(Boolean).join(' • ');
+    return '<div class="sticky" style="background:' + esc(n.color || '#fde047') + '; transform:rotate(' + rot + 'deg);">' +
+      '<div class="txt">' + esc(n.text) + '</div>' + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + '</div>';
+  }).join('') + '</div>';
+  return '<div class="panel-title">📌 Family <span class="accent">Message Board</span></div>' + notesHtml;
+}
+function renderHeadlinesPanel(){
+  if (!headlines.length) return '';
+  return '<div class="panel-title">📰 Louisiana <span class="accent">News</span></div>' +
+    '<div class="headlines full">' +
+    headlines.slice(0, 8).map(h => '<div class="headline">' + esc(h) + '</div>').join('') + '</div>';
+}
+function renderPhotoPanel(){
+  let src = 'family-photo.jpg';
+  try { src = localStorage.getItem('fcc_photo_v1') || src; } catch(e){}
+  src = PREVIEW_IMAGES['family-photo.jpg'] && src === 'family-photo.jpg' ? PREVIEW_IMAGES['family-photo.jpg'] : src;
+  return '<div class="photo-wrap"><img src="' + src + '" alt="">' +
+    (caption ? '<div class="photo-cap">' + esc(caption) + '</div>' : '') + '</div>';
+}
+
+/* ================= ROTATION ================= */
+const PANEL_SECONDS = 25;
+let panelDefs = [], panelIdx = 0, panelTimer = null, paused = false;
+function buildPanels(){
+  const defs = [];
+  defs.push({ id:'calendar', html: renderCalendarPanel() });
+  defs.push({ id:'today', html: renderTodayPanel() });
+  const cd = renderCountdownPanel(); if (cd) defs.push({ id:'countdowns', html: cd });
+  const wx = renderWeatherPanel(); if (wx) defs.push({ id:'weather', html: wx });
+  const bd = renderBoardPanel(); if (bd) defs.push({ id:'board', html: bd });
+  const nw = renderHeadlinesPanel(); if (nw) defs.push({ id:'news', html: nw });
+  defs.push({ id:'photo', html: renderPhotoPanel() });
+  return defs;
+}
+function showPanel(i){
+  const host = $('panelHost');
+  const kids = host.children;
+  for (let k = 0; k < kids.length; k++) kids[k].className = 'panel' + (k === i ? ' active' : '');
+  const dots = $('dots').children;
+  for (let k = 0; k < dots.length; k++) dots[k].className = 'd' + (k === i ? ' on' : '');
+  if (panelDefs[i] && panelDefs[i].id === 'calendar'){
+    buildThemeAnim($('tvAnimLayer'), calendarThemeFor(new Date()));
+  }
+}
+function nextPanel(step){
+  if (!panelDefs.length) return;
+  panelIdx = (panelIdx + (step || 1) + panelDefs.length) % panelDefs.length;
+  showPanel(panelIdx);
+  restartTimer();
+}
+function restartTimer(){
+  if (panelTimer) clearInterval(panelTimer);
+  if (!paused) panelTimer = setInterval(() => nextPanel(1), PANEL_SECONDS * 1000);
+}
+function renderAll(){
+  const currentId = panelDefs[panelIdx] ? panelDefs[panelIdx].id : null;
+  panelDefs = buildPanels();
+  const host = $('panelHost');
+  host.innerHTML = panelDefs.map(d => '<section class="panel">' + d.html + '</section>').join('');
+  $('dots').innerHTML = panelDefs.map(() => '<div class="d"></div>').join('');
+  const keep = panelDefs.findIndex(d => d.id === currentId);
+  panelIdx = keep >= 0 ? keep : 0;
+  showPanel(panelIdx);
+  restartTimer();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextPanel(1);
+  else if (e.key === 'ArrowLeft') nextPanel(-1);
+  else if (e.key === ' '){
+    e.preventDefault();
+    paused = !paused;
+    $('pausedTag').className = paused ? 'on' : '';
+    restartTimer();
+  }
+});
+document.addEventListener('click', () => { if (!paused) nextPanel(1); });
+
+/* ================= CLOCK + BURN-IN SHIFT ================= */
+function tickClock(){
+  const now = new Date();
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  $('clock').innerHTML = h + ':' + pad(now.getMinutes()) + ' <span class="ampm">' + ampm + '</span>';
+  $('dateLine').textContent = DAYS[now.getDay()] + ', ' + MONTHS[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+}
+let shiftOn = false;
+setInterval(() => {
+  shiftOn = !shiftOn;
+  $('shiftWrap').style.transform = shiftOn ? 'translate(2px, 1px)' : 'translate(0, 0)';
+}, 60 * 1000);
+
+/* ================= INIT ================= */
+renderAll();
+renderTicker();
+loadWeather(); loadNews(); tickClock();
+setInterval(tickClock, 1000);
+setInterval(loadWeather, 15 * 60 * 1000);
+setInterval(loadNews, 15 * 60 * 1000);
+setInterval(renderAll, 5 * 60 * 1000); /* pick up date rollovers */
+</script>
+</body>
+</html>
