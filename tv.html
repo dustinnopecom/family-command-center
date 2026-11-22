@@ -158,6 +158,16 @@
   .ticker-track .sep { color:#52525b; }
   #pausedTag { display:none; position:fixed; top:2vmin; right:3vmin; background:#f59e0b; color:#18181b; font-weight:900; font-size:1.6vmin; letter-spacing:.14em; border-radius:.8vmin; padding:.6vmin 1.4vmin; z-index:50; }
   #pausedTag.on { display:block; }
+
+  .xmas-wrap { position:relative; border-radius:2vmin; overflow:hidden; min-height:62vh; background:#101018; }
+  .xmas-wrap video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .xmas-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.05) 45%, rgba(0,0,0,.65) 100%); }
+  .xmas-top { position:absolute; top:0; left:0; right:0; text-align:center; padding-top:2.5vmin; }
+  .xmas-big { font-size:11vmin; font-weight:900; line-height:1; color:#fff; text-shadow:0 0 3vmin rgba(37,208,232,.8); }
+  .xmas-sub { font-size:3.2vmin; font-weight:800; letter-spacing:.14em; color:#ffd76a; text-shadow:0 2px 8px rgba(0,0,0,.8); }
+  .xmas-bottom { position:absolute; bottom:0; left:0; right:0; text-align:center; padding:2.5vmin 4vmin 3vmin; }
+  .xmas-style { display:inline-block; font-size:2vmin; font-weight:800; letter-spacing:.1em; color:#0b0b12; background:#ffd76a; border-radius:2vmin; padding:.6vmin 1.8vmin; margin-bottom:1.2vmin; }
+  .xmas-surprise { font-size:3.4vmin; font-weight:700; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.9); }
 </style>
 </head>
 <body>
@@ -504,15 +514,17 @@ const EVENT_MEDIA = [
   { keys: ['physical therapy', 'physiofit', 'rehab'], video: 'tv-event-images/pt-animated-tv-loop.mp4', poster: 'tv-event-images/pt-poster.webp' },
   { keys: ['dog', 'play-doh', 'cookie-doh', 'astro-doh', 'astro', 'p-d-d', 'vet', 'groom'], video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' },
   { keys: ['birthday', 'bday', 'b-day'], video: 'tv-event-images/birthday-animated-tv-loop.mp4', poster: 'tv-event-images/birthday-poster.webp' },
-  { keys: ['school', 'pickup', 'bus', 'class', 'teacher', 'homework', 'graduation'], video: 'tv-event-images/school-animated-tv-loop.mp4', poster: 'tv-event-images/school-poster.webp' },
-  { keys: ['christmas', 'xmas', 'santa'], video: 'tv-event-images/christmas-animated-tv-loop.mp4', poster: 'tv-event-images/christmas-poster.webp' },
-  { keys: ['party', 'celebration', 'get-together', 'get together', 'cookout', 'bbq', 'barbecue', 'boil'], video: 'tv-event-images/party-animated-tv-loop.mp4', poster: 'tv-event-images/party-poster.webp' },
-  { keys: ['lawyer', 'attorney', 'legal'], video: 'tv-event-images/lawyer-animated-tv-loop.mp4', poster: 'tv-event-images/lawyer-poster.webp' }
+  { keys: ['school', 'pickup', 'bus', 'class', 'teacher', 'homework', 'graduation'], video: 'tv-event-images/school-zordoh-tv-loop.mp4', poster: 'tv-event-images/school-zordoh-poster.webp' },
+  { keys: ['christmas', 'xmas', 'santa'], video: 'tv-event-images/christmas-reindeer-redo-tv-loop.mp4', poster: 'tv-event-images/christmas-reindeer-redo-poster.webp' },
+  { keys: ['party', 'celebration', 'get-together', 'get together', 'cookout', 'bbq', 'barbecue', 'boil'], video: 'tv-event-images/party-crawfish-tv-loop.mp4', poster: 'tv-event-images/party-crawfish-poster.webp' },
+  { keys: ['lawyer', 'attorney', 'legal'], video: 'tv-event-images/lawyer-gator-tv-loop.mp4', poster: 'tv-event-images/lawyer-gator-poster.webp' }
 ];
 const PRIVATE_KEYS = ['med', 'reading', 'blood pressure', 'weight', 'doctor', 'cardiolog', 'clinic', 'hospital', 'surgery', 'prescription', 'pharmacy', 'insurance', 'bill', 'payment', 'disability', 'court', 'ssdi', 'medicare', 'medicaid'];
+const DUSTIN_BIRTHDAY_MEDIA = { video: 'tv-event-images/birthday-dustin-rockstar-tv-loop.mp4', poster: 'tv-event-images/birthday-dustin-rockstar-poster.webp' };
 function eventMediaFor(title){
   const t = ' ' + String(title || '').toLowerCase() + ' ';
   if (/(^|[^a-z])pt([^a-z]|$)/.test(t)) return EVENT_MEDIA[1];
+  if (t.indexOf('dustin') !== -1 && (t.indexOf('birthday') !== -1 || t.indexOf('founder day') !== -1)) return DUSTIN_BIRTHDAY_MEDIA;
   for (const k of PRIVATE_KEYS) if (t.indexOf(k) !== -1) return null;
   for (const m of EVENT_MEDIA) for (const k of m.keys) if (t.indexOf(k) !== -1) return m;
   return null;
@@ -547,6 +559,61 @@ function renderEventPicturesPanel(){
       '<span class="ep-who" style="background:#ffffff">' + mem.label + '</span></div>';
   }).join('');
   return '<div class="panel-title">🎬 Coming Up <span class="accent">— Event Pictures</span></div><div class="ep-grid">' + cards + '</div>';
+}
+
+
+/* ================= CHRISTMAS COUNTDOWN (Dec 1-25, every year) =================
+   Mixed Advent: three styles rotate by day — Bayou Advent door, Dogs open
+   a gift, Santa's sleigh tracker — with a different surprise every day. */
+const XMAS_STYLES = [
+  { name: '🚪 BAYOU ADVENT DOOR', video: 'tv-event-images/christmas-countdown-advent-tv-loop.mp4', poster: 'tv-event-images/christmas-countdown-advent-poster.webp' },
+  { name: '🎁 THE DOGS OPEN A GIFT', video: 'tv-event-images/christmas-countdown-mixed-sample.mp4', poster: 'tv-event-images/christmas-countdown-dogs-poster.webp' },
+  { name: "🛷 SANTA'S SLEIGH TRACKER", video: 'tv-event-images/christmas-countdown-sleigh-tv-loop.mp4', poster: 'tv-event-images/christmas-countdown-sleigh-poster.webp' }
+];
+const XMAS_SURPRISES = [
+  "🎄 The countdown begins! 24 days of Gatlin Christmas magic.",
+  "😂 Why did the Christmas tree go to the barber? It needed a trim!",
+  "🎵 Sing one Christmas song out loud today — dogs get to howl along.",
+  "🦌 Fun fact: reindeer eyes change color in winter to see in the dark.",
+  "🍪 Bake or buy one sweet treat and share it with the whole house.",
+  "😂 What do elves learn in school? The elf-abet!",
+  "⭐ Tonight: go look at the stars over the pond for one quiet minute.",
+  "🎁 Wrap one present today — even if it is just for the dogs.",
+  "😂 Why does Santa have three gardens? So he can ho-ho-ho!",
+  "🎶 Play your favorite Christmas song while supper cooks.",
+  "🦃 Fun fact: the first artificial Christmas trees were made of goose feathers.",
+  "💌 Text somebody you miss and wish them a Merry Christmas early.",
+  "😂 What do you call a snowman with a six-pack? An abdominal snowman!",
+  "🕯️ Light a candle tonight and think of one good thing from this year.",
+  "🎄 Fun fact: Christmas trees take about 15 years to grow to full size.",
+  "🐾 Give Play-Doh, Cookie-Doh, and Astro-Doh an extra treat today.",
+  "😂 Why did the ornament go to school? To get a little brighter!",
+  "🎬 Family pick: watch a Christmas movie together tonight.",
+  "❄️ Fun fact: no two snowflakes are exactly alike.",
+  "🎁 Do one kind thing for a neighbor — cookies, a card, or a hand.",
+  "😂 What does Santa eat for breakfast? Frosted Flakes!",
+  "🌙 Sleigh check: Santa is getting closer to Lockport every night.",
+  "🎅 Tomorrow is Christmas Eve — set out cookies and check the sky!",
+  "🎄 Christmas Eve! Family, food, and one more sleep til the big day.",
+  "🎉 MERRY CHRISTMAS, GATLIN FAMILY! 🎄🎁⭐"
+];
+function renderChristmasCountdownPanel(){
+  const now = new Date();
+  if (now.getMonth() !== 11) return '';
+  const day = now.getDate();
+  if (day < 1 || day > 25) return '';
+  const daysLeft = 25 - day;
+  const style = XMAS_STYLES[(day - 1) % 3];
+  const surprise = XMAS_SURPRISES[day - 1] || '';
+  const big = daysLeft > 0 ? String(daysLeft) : '🎄';
+  const sub = daysLeft > 1 ? 'DAYS TIL CHRISTMAS' : daysLeft === 1 ? 'DAY TIL CHRISTMAS' : 'MERRY CHRISTMAS!';
+  return '<div class="panel-title">🎄 Christmas <span class="accent">Countdown</span></div>' +
+    '<div class="xmas-wrap">' +
+    '<video autoplay muted loop playsinline preload="auto" poster="' + style.poster + '" src="' + style.video + '"></video>' +
+    '<div class="xmas-shade"></div>' +
+    '<div class="xmas-top"><div class="xmas-big">' + big + '</div><div class="xmas-sub">' + sub + '</div></div>' +
+    '<div class="xmas-bottom"><span class="xmas-style">' + style.name + ' — DAY ' + day + ' OF 25</span>' +
+    '<div class="xmas-surprise">' + esc(surprise) + '</div></div></div>';
 }
 
 function renderCountdownPanel(){
@@ -682,6 +749,7 @@ function buildPanels(){
   defs.push({ id:'calendar', html: renderCalendarPanel() });
   defs.push({ id:'today', html: renderTodayPanel() });
   const ep = renderEventPicturesPanel(); if (ep) defs.push({ id:'event-pictures', html: ep });
+  const xc = renderChristmasCountdownPanel(); if (xc) defs.push({ id:'christmas-countdown', html: xc });
   const cd = renderCountdownPanel(); if (cd) defs.push({ id:'countdowns', html: cd });
   const wx = renderWeatherPanel(); if (wx) defs.push({ id:'weather', html: wx });
   const bd = renderBoardPanel(); if (bd) defs.push({ id:'board', html: bd });
