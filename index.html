@@ -861,7 +861,8 @@ let cursor = new Date();
     { id: uid(), title: "🎂 Astro-Doh's Birthday", date: y+'-02-11', time:'', who:'dogs', yearly:true },
     { id: uid(), title: "💕 Dustin & Hannah — Dating Anniversary", date: y+'-10-12', time:'', who:'family', yearly:true },
     { id: uid(), title: "🎂 Alex's Birthday", date: y+'-12-28', time:'', who:'family', yearly:true },
-    { id: uid(), title: "💍 Dustin & Hannah's Wedding Day", date: '2027-07-17', time:'', who:'family', yearly:true }
+    { id: uid(), title: "💍 Dustin & Hannah's Wedding Day", date: '2027-07-17', time:'', who:'family', yearly:true },
+    { id: uid(), title: '🦃 Thanksgiving', date: y+'-11-26', time:'', who:'family', yearly:true, floating:'nth-weekday', month:11, weekday:4, nth:4 }
   ];
   tasks = [
     { id: uid(), text: 'Feed the pond fish (GloFish & minnows)', who:'family', done:false },
@@ -896,12 +897,13 @@ function addMissingFamilyDates(list){
     { title: "🎂 Astro-Doh's Birthday", date: y+'-02-11', time:'', who:'dogs', yearly:true },
     { title: "💕 Dustin & Hannah — Dating Anniversary", date: y+'-10-12', time:'', who:'family', yearly:true },
     { title: "🎂 Alex's Birthday", date: y+'-12-28', time:'', who:'family', yearly:true },
-    { title: "💍 Dustin & Hannah's Wedding Day", date: '2027-07-17', time:'', who:'family', yearly:true }
+    { title: "💍 Dustin & Hannah's Wedding Day", date: '2027-07-17', time:'', who:'family', yearly:true },
+    { title: '🦃 Thanksgiving', date: y+'-11-26', time:'', who:'family', yearly:true, floating:'nth-weekday', month:11, weekday:4, nth:4 }
   ];
   let changed = false;
   const out = list.slice();
   for (const w of wanted){
-    if (!out.some(e => e.title === w.title)){ out.push({ id: uid(), title: w.title, date: w.date, time: w.time, who: w.who, yearly: w.yearly }); changed = true; }
+    if (!out.some(e => e.title === w.title)){ const ne = { id: uid(), title: w.title, date: w.date, time: w.time, who: w.who, yearly: w.yearly }; if (w.floating){ ne.floating = w.floating; ne.month = w.month; ne.weekday = w.weekday; ne.nth = w.nth; } out.push(ne); changed = true; }
   }
   return { list: out, changed };
 }
@@ -1080,7 +1082,11 @@ function eventsOn(dateStr){
   const d = new Date(dateStr + 'T12:00:00');
   const md = pad(d.getMonth()+1) + '-' + pad(d.getDate());
   for (const e of events){
-    if (e.date === dateStr) out.push(e);
+    if (e.floating === 'nth-weekday'){
+      const t = nthWeekday(d.getFullYear(), (e.month || 11) - 1, (e.weekday == null ? 4 : e.weekday), (e.nth || 4));
+      if (t && t.getFullYear() === d.getFullYear() && t.getMonth() === d.getMonth() && t.getDate() === d.getDate()) out.push(e);
+    }
+    else if (e.date === dateStr) out.push(e);
     else if (e.yearly && e.date.slice(5) === md) out.push(e);
   }
   return out;

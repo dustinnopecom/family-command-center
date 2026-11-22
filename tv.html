@@ -228,12 +228,21 @@ let events = [], tasks = [], notes = [], countdowns = [], caption = '';
 let weatherData = null, headlines = [], alerts = [];
 let syncReady = false;
 
+function nthWeekday(y, m, weekday, n){
+  const first = new Date(y, m, 1);
+  const offset = (weekday - first.getDay() + 7) % 7;
+  return new Date(y, m, 1 + offset + (n - 1) * 7);
+}
 function eventsOn(dateStr){
   const out = [];
   const d = new Date(dateStr + 'T12:00:00');
   const md = pad(d.getMonth()+1) + '-' + pad(d.getDate());
   for (const e of events){
-    if (e.date === dateStr) out.push(e);
+    if (e.floating === 'nth-weekday'){
+      const t = nthWeekday(d.getFullYear(), (e.month || 11) - 1, (e.weekday == null ? 4 : e.weekday), (e.nth || 4));
+      if (t && t.getFullYear() === d.getFullYear() && t.getMonth() === d.getMonth() && t.getDate() === d.getDate()) out.push(e);
+    }
+    else if (e.date === dateStr) out.push(e);
     else if (e.yearly && e.date && e.date.slice(5) === md) out.push(e);
   }
   return out;
