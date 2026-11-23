@@ -141,6 +141,11 @@
   .sticky { border-radius:1.2vmin; padding:1.8vmin; color:#18181b; box-shadow:0 8px 24px rgba(0,0,0,.45); }
   .sticky .txt { font-size:2.2vmin; font-weight:700; line-height:1.35; }
   .sticky .meta { font-size:1.5vmin; font-weight:800; opacity:.65; margin-top:1vmin; text-transform:uppercase; letter-spacing:.08em; }
+  .today-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; }
+  .today-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .today-title { position:absolute; top:2vmin; left:2.5vmin; font-size:4.6vmin; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.85); z-index:2; }
+  .today-board { position:absolute; top:13%; right:2%; width:45%; max-height:84%; overflow:hidden; display:flex; flex-direction:column; gap:1.6vmin; z-index:2; }
+  .today-board .col-card { background:rgba(8,10,20,.78); backdrop-filter:blur(3px); }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
   .panel-vid video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -664,12 +669,13 @@ function renderTodayPanel(){
   const now = new Date();
   const tom = new Date(now); tom.setDate(tom.getDate() + 1);
   const head = d => '<span class="dow">' + DAYS[d.getDay()] + '</span> ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
-  return '<div class="panel-title">📅 <span class="accent">Today</span> &amp; Tomorrow</div>' +
-    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-presenter-poster.webp"><source src="tv-event-images/panel-today-presenter-tv-loop.mp4" type="video/mp4"></video></div>' +
-    '<div class="cols">' +
+  return '<div class="today-fs">' +
+    '<video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-presenter-poster.webp"><source src="tv-event-images/panel-today-presenter-tv-loop.mp4" type="video/mp4"></video>' +
+    '<div class="today-title">📅 <span class="accent">Today</span> &amp; Tomorrow</div>' +
+    '<div class="today-board">' +
       '<div class="col-card"><div class="col-head">' + head(now) + '</div>' + agendaRows(todayStr()) + reminderRows() + '</div>' +
       '<div class="col-card"><div class="col-head">' + head(tom) + '</div>' + agendaRows(dstr(tom)) + '</div>' +
-    '</div>';
+    '</div></div>';
 }
 
 
@@ -693,6 +699,7 @@ const EVENT_MEDIA = [
   { keys: ['birthday', 'bday', 'b-day'], video: 'tv-event-images/birthday-animated-tv-loop.mp4', poster: 'tv-event-images/birthday-poster.webp' },
   { keys: ['school', 'pickup', 'bus', 'class', 'teacher', 'homework', 'graduation'], video: 'tv-event-images/school-zordoh-tv-loop.mp4', poster: 'tv-event-images/school-zordoh-poster.webp' },
   { keys: ['christmas', 'xmas', 'santa'], video: 'tv-event-images/christmas-reindeer-redo-tv-loop.mp4', poster: 'tv-event-images/christmas-reindeer-redo-poster.webp' },
+  { keys: ['grocery', 'groceries', 'walmart', 'shopping', 'store run', 'food shopping'], video: 'tv-event-images/grocery-walmart-tv-loop.mp4', poster: 'tv-event-images/grocery-walmart-poster.webp' },
   { keys: ['party', 'celebration', 'get-together', 'get together', 'cookout', 'bbq', 'barbecue', 'boil'], video: 'tv-event-images/party-crawfish-tv-loop.mp4', poster: 'tv-event-images/party-crawfish-poster.webp' },
   { keys: ['lawyer', 'attorney', 'legal'], video: 'tv-event-images/lawyer-gator-tv-loop.mp4', poster: 'tv-event-images/lawyer-gator-poster.webp' }
 ];
