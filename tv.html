@@ -462,7 +462,10 @@ function buildThemeAnim(layer, t){
    at midnight. Private/unmatched events stay plain; empty days get the
    ambient dogs scene so nothing sits still. */
 const WP_HEAD_COLORS = ['#e0654f','#8b7bd8','#2a9d8f','#e9a03b','#d95d8f','#4f8fe0','#7bc96f'];
-const WP_AMBIENT = { video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' };
+const WP_AMBIENTS = [
+  { video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' },
+  { video: 'tv-event-images/empty-zordoh-mowing-tv-loop.mp4', poster: 'tv-event-images/empty-zordoh-mowing-poster.webp' }
+];
 let wpIdx = 0, wpOverview = false, wpTimer = null;
 function renderWeeklyPlannerPanel(){
   const now = new Date();
@@ -494,7 +497,8 @@ function renderWeeklyPlannerPanel(){
         (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
         '<div class="what">' + esc(first.title) + '</div><div class="when">' + esc(mem.label) + more + '</div></div>';
     } else {
-      body = '<video autoplay muted loop playsinline preload="auto" poster="' + WP_AMBIENT.poster + '" src="' + WP_AMBIENT.video + '"></video><div class="wp-cshade"></div>' +
+      const amb = WP_AMBIENTS[Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) % WP_AMBIENTS.length];
+      body = '<video autoplay muted loop playsinline preload="auto" poster="' + amb.poster + '" src="' + amb.video + '"></video><div class="wp-cshade"></div>' +
         (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
         '<div class="wp-cevt"><div class="what">🐾 FAMILY DAY</div><div class="when">Nothing planned</div></div>';
     }
