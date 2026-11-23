@@ -168,6 +168,37 @@
   .xmas-bottom { position:absolute; bottom:0; left:0; right:0; text-align:center; padding:2.5vmin 4vmin 3vmin; }
   .xmas-style { display:inline-block; font-size:2vmin; font-weight:800; letter-spacing:.1em; color:#0b0b12; background:#ffd76a; border-radius:2vmin; padding:.6vmin 1.8vmin; margin-bottom:1.2vmin; }
   .xmas-surprise { font-size:3.4vmin; font-weight:700; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.9); }
+
+  /* Weekly Planner (day-by-day, replaces month grid) */
+  .wp-planner { flex:1; min-height:0; display:flex; flex-direction:column; background:#123b42; border:3px solid #2fb3c8; border-radius:1.8vmin; overflow:hidden; }
+  .wp-bar { display:flex; align-items:center; gap:1vmin; background:#1b8aa0; padding:1.2vmin 2vmin; flex-shrink:0; }
+  .wp-dot { width:1.6vmin; height:1.6vmin; border-radius:50%; flex-shrink:0; }
+  .wp-title { flex:1; text-align:center; font-size:3.6vmin; font-weight:900; letter-spacing:.14em; text-shadow:0 2px 6px rgba(0,0,0,.45); }
+  .wp-range { text-align:center; background:#0e2f36; color:#ffd76a; font-weight:800; padding:.8vmin; font-size:2vmin; letter-spacing:.08em; flex-shrink:0; }
+  .wp-viewport { flex:1; min-height:0; overflow:hidden; background:#f3e9d7; padding:2vmin 0; }
+  .wp-track { display:flex; gap:1.8vmin; padding:0 12%; height:100%; transition:transform .9s cubic-bezier(.22,.9,.28,1); will-change:transform; }
+  .wp-track.overview { padding:0 1vmin; }
+  .wp-card { flex:0 0 76%; max-width:76%; background:#fff; border-radius:1.6vmin; overflow:hidden; box-shadow:0 1vmin 3vmin rgba(0,0,0,.35); opacity:.55; transform:scale(.94); transition:opacity .6s, transform .6s; display:flex; flex-direction:column; }
+  .wp-card.active { opacity:1; transform:scale(1); outline:.45vmin solid #25d0e8; }
+  .wp-track.overview .wp-card { flex-basis:calc((100% - 10.8vmin)/7); max-width:calc((100% - 10.8vmin)/7); opacity:1; transform:none; outline:none; }
+  .wp-chead { color:#fff; font-weight:900; letter-spacing:.05em; text-transform:uppercase; padding:1.2vmin 1.6vmin; font-size:2.6vmin; text-shadow:0 1px 4px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+  .wp-track.overview .wp-chead { font-size:1.3vmin; padding:.7vmin .6vmin; }
+  .wp-cbody { position:relative; flex:1; min-height:0; background:#171722; }
+  .wp-cbody video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .wp-cshade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.38) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%); }
+  .wp-cevt { position:absolute; left:0; right:0; bottom:0; text-align:center; padding:1.4vmin 1.2vmin 1.6vmin; }
+  .wp-cevt .what { font-size:3.4vmin; font-weight:900; text-shadow:0 2px 10px #000; line-height:1.15; }
+  .wp-cevt .when { font-size:2vmin; font-weight:800; color:#ffd76a; text-shadow:0 2px 8px #000; margin-top:.3vmin; }
+  .wp-track.overview .wp-cevt .what { font-size:1.5vmin; }
+  .wp-track.overview .wp-cevt .when { font-size:1.1vmin; }
+  .wp-today { position:absolute; top:1.2vmin; right:1.2vmin; background:#25d0e8; color:#0b0b12; font-weight:900; font-size:1.5vmin; letter-spacing:.1em; border-radius:1vmin; padding:.4vmin 1vmin; z-index:2; }
+  .wp-plain { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2vmin; color:#18181b; }
+  .wp-plain .what { font-size:3vmin; font-weight:900; line-height:1.2; }
+  .wp-plain .when { font-size:1.9vmin; font-weight:800; margin-top:.5vmin; }
+  .wp-track.overview .wp-plain .what { font-size:1.4vmin; }
+  .wp-progress { display:flex; gap:.8vmin; justify-content:center; padding:1.2vmin; background:#0e2f36; flex-shrink:0; }
+  .wp-pdot { width:1.3vmin; height:1.3vmin; border-radius:50%; background:#3d6b74; transition:all .4s; }
+  .wp-pdot.on { background:#ffd76a; transform:scale(1.35); }
 </style>
 </head>
 <body>
@@ -423,6 +454,96 @@ function buildThemeAnim(layer, t){
 }
 
 /* ================= PANELS ================= */
+
+/* ================= WEEKLY PLANNER (day-by-day, rolling 7 days) =================
+   Like Dustin's example video: starts on today, slides to each day one by
+   one (big card, day+time header, animated scene), then pulls back to the
+   whole week. Window is always today..today+6, so it rolls over by itself
+   at midnight. Private/unmatched events stay plain; empty days get the
+   ambient dogs scene so nothing sits still. */
+const WP_HEAD_COLORS = ['#e0654f','#8b7bd8','#2a9d8f','#e9a03b','#d95d8f','#4f8fe0','#7bc96f'];
+const WP_AMBIENT = { video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' };
+let wpIdx = 0, wpOverview = false, wpTimer = null;
+function renderWeeklyPlannerPanel(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start); end.setDate(end.getDate() + 6);
+  const range = DAYS[start.getDay()].slice(0,3) + ' ' + MONTHS[start.getMonth()].slice(0,3) + ' ' + start.getDate() +
+    ' – ' + DAYS[end.getDay()].slice(0,3) + ' ' + MONTHS[end.getMonth()].slice(0,3) + ' ' + end.getDate() + ', ' + end.getFullYear();
+  let cards = '';
+  for (let i = 0; i < 7; i++){
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const ds = dstr(d);
+    const evs = eventsOn(ds).slice().sort((a,b) => ((a.time||'') < (b.time||'') ? -1 : 1));
+    const first = evs[0] || null;
+    let media = null, mediaEvt = null;
+    for (const e of evs){ const m = eventMediaFor(e.title); if (m){ media = m; mediaEvt = e; break; } }
+    const headEvt = mediaEvt || first;
+    const head = DAYS[d.getDay()] + (headEvt && headEvt.time ? ' - ' + formatTime(headEvt.time) : ' - ' + MONTHS[d.getMonth()].slice(0,3) + ' ' + d.getDate());
+    let body = '';
+    if (media){
+      const mem = MEMBERS[mediaEvt.who] || MEMBERS.family;
+      const more = evs.length > 1 ? ' • +' + (evs.length - 1) + ' more' : '';
+      body = '<video autoplay muted loop playsinline preload="auto" poster="' + media.poster + '" src="' + media.video + '"></video><div class="wp-cshade"></div>' +
+        (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
+        '<div class="wp-cevt"><div class="what">' + esc(mediaEvt.title) + '</div><div class="when">' + esc(mem.label) + more + '</div></div>';
+    } else if (first){
+      const mem = MEMBERS[first.who] || MEMBERS.family;
+      const more = evs.length > 1 ? ' • +' + (evs.length - 1) + ' more' : '';
+      body = '<div class="wp-plain" style="background:' + memberBg(first.who) + ';">' +
+        (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
+        '<div class="what">' + esc(first.title) + '</div><div class="when">' + esc(mem.label) + more + '</div></div>';
+    } else {
+      body = '<video autoplay muted loop playsinline preload="auto" poster="' + WP_AMBIENT.poster + '" src="' + WP_AMBIENT.video + '"></video><div class="wp-cshade"></div>' +
+        (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
+        '<div class="wp-cevt"><div class="what">🐾 FAMILY DAY</div><div class="when">Nothing planned</div></div>';
+    }
+    cards += '<div class="wp-card' + (i === wpIdx && !wpOverview ? ' active' : '') + '">' +
+      '<div class="wp-chead" style="background:' + WP_HEAD_COLORS[i] + '">' + esc(head) + '</div>' +
+      '<div class="wp-cbody">' + body + '</div></div>';
+  }
+  const dots = Array.from({length:7}, (_,i) => '<span class="wp-pdot' + ((wpOverview || i === wpIdx) ? ' on' : '') + '"></span>').join('');
+  return '<div class="wp-planner">' +
+    '<div class="wp-bar"><span class="wp-dot" style="background:#ff5f57"></span><span class="wp-dot" style="background:#febc2e"></span><span class="wp-dot" style="background:#28c840"></span>' +
+    '<div class="wp-title">WEEKLY PLANNER</div><span style="width:6vmin"></span></div>' +
+    '<div class="wp-range">' + esc(range) + '</div>' +
+    '<div class="wp-viewport"><div class="wp-track' + (wpOverview ? ' overview' : '') + '" id="wpTrack">' + cards + '</div></div>' +
+    '<div class="wp-progress">' + dots + '</div></div>';
+}
+function wpPosition(){
+  const track = $('wpTrack');
+  if (!track) return;
+  if (wpOverview){ track.style.transform = 'translateX(0)'; return; }
+  const card = track.children[wpIdx];
+  if (!card) return;
+  const vp = track.parentElement;
+  const x = card.offsetLeft - (vp.clientWidth - card.offsetWidth) / 2;
+  track.style.transform = 'translateX(' + (-x) + 'px)';
+}
+function wpStep(){
+  if (paused) return;
+  if (wpOverview){ wpOverview = false; wpIdx = 0; }
+  else { wpIdx++; if (wpIdx > 6){ wpOverview = true; wpIdx = 6; } }
+  const track = $('wpTrack');
+  if (!track){ stopWp(); return; }
+  track.className = 'wp-track' + (wpOverview ? ' overview' : '');
+  for (let k = 0; k < track.children.length; k++) track.children[k].classList.toggle('active', !wpOverview && k === wpIdx);
+  const prog = track.closest('.wp-planner') ? track.closest('.wp-planner').querySelector('.wp-progress') : null;
+  if (prog) for (let k = 0; k < prog.children.length; k++) prog.children[k].classList.toggle('on', wpOverview || k === wpIdx);
+  wpPosition();
+}
+function startWp(){
+  stopWp();
+  wpIdx = 0; wpOverview = false;
+  const track = $('wpTrack');
+  if (!track) return;
+  track.className = 'wp-track';
+  for (let k = 0; k < track.children.length; k++) track.children[k].classList.toggle('active', k === 0);
+  wpPosition();
+  wpTimer = setInterval(wpStep, 4000);
+}
+function stopWp(){ if (wpTimer){ clearInterval(wpTimer); wpTimer = null; } }
+
 function renderCalendarPanel(){
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
@@ -746,7 +867,7 @@ const PANEL_SECONDS = 25;
 let panelDefs = [], panelIdx = 0, panelTimer = null, paused = false;
 function buildPanels(){
   const defs = [];
-  defs.push({ id:'calendar', html: renderCalendarPanel() });
+  defs.push({ id:'calendar', html: renderWeeklyPlannerPanel(), seconds: 35 });
   defs.push({ id:'today', html: renderTodayPanel() });
   const ep = renderEventPicturesPanel(); if (ep) defs.push({ id:'event-pictures', html: ep });
   const xc = renderChristmasCountdownPanel(); if (xc) defs.push({ id:'christmas-countdown', html: xc });
@@ -768,9 +889,7 @@ function showPanel(i){
     const inActive = v.closest('.panel') && v.closest('.panel').classList.contains('active');
     if (inActive){ const pr = v.play(); if (pr) pr.catch(() => {}); } else { v.pause(); }
   });
-  if (panelDefs[i] && panelDefs[i].id === 'calendar'){
-    buildThemeAnim($('tvAnimLayer'), calendarThemeFor(new Date()));
-  }
+  if (panelDefs[i] && panelDefs[i].id === 'calendar'){ startWp(); } else { stopWp(); }
 }
 function nextPanel(step){
   if (!panelDefs.length) return;
@@ -780,7 +899,10 @@ function nextPanel(step){
 }
 function restartTimer(){
   if (panelTimer) clearInterval(panelTimer);
-  if (!paused) panelTimer = setInterval(() => nextPanel(1), PANEL_SECONDS * 1000);
+  if (!paused){
+    const secs = (panelDefs[panelIdx] && panelDefs[panelIdx].seconds) || PANEL_SECONDS;
+    panelTimer = setInterval(() => nextPanel(1), secs * 1000);
+  }
 }
 function renderAll(){
   const currentId = panelDefs[panelIdx] ? panelDefs[panelIdx].id : null;
