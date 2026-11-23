@@ -140,6 +140,31 @@
   .sticky { border-radius:1.2vmin; padding:1.8vmin; color:#18181b; box-shadow:0 8px 24px rgba(0,0,0,.45); }
   .sticky .txt { font-size:2.2vmin; font-weight:700; line-height:1.35; }
   .sticky .meta { font-size:1.5vmin; font-weight:800; opacity:.65; margin-top:1vmin; text-transform:uppercase; letter-spacing:.08em; }
+  .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
+  .panel-vid video { width:100%; height:22vmin; object-fit:cover; display:block; }
+  .wx-card { animation: wxIn .7s cubic-bezier(.2,1.3,.4,1) both; }
+  .wx-card:nth-child(2) { animation-delay:.25s; }
+  .wx-day { animation: wxIn .6s cubic-bezier(.2,1.3,.4,1) both; }
+  .wx-day:nth-child(2) { animation-delay:.15s; } .wx-day:nth-child(3) { animation-delay:.3s; }
+  @keyframes wxIn { from { opacity:0; transform:translateY(4vmin) scale(.94); } to { opacity:1; transform:none; } }
+  .col-card { animation: wxIn .7s cubic-bezier(.2,1.3,.4,1) both; }
+  .col-card:nth-child(2) { animation-delay:.25s; }
+  .evt-row, .rem-row, .empty-note { animation: bnIn .55s cubic-bezier(.2,1.2,.4,1) both; }
+  .evt-row:nth-of-type(2), .rem-row:nth-of-type(2) { animation-delay:.15s; }
+  .evt-row:nth-of-type(3), .rem-row:nth-of-type(3) { animation-delay:.3s; }
+  .evt-row:nth-of-type(4), .rem-row:nth-of-type(4) { animation-delay:.45s; }
+  .evt-row:nth-of-type(5), .rem-row:nth-of-type(5) { animation-delay:.6s; }
+  .sticky { transform:rotate(var(--rot,0deg)); animation: noteIn .65s cubic-bezier(.2,1.4,.4,1) both; }
+  .sticky:nth-child(2) { animation-delay:.15s; } .sticky:nth-child(3) { animation-delay:.3s; }
+  .sticky:nth-child(4) { animation-delay:.45s; } .sticky:nth-child(5) { animation-delay:.6s; }
+  .sticky:nth-child(6) { animation-delay:.75s; } .sticky:nth-child(7) { animation-delay:.9s; }
+  .sticky:nth-child(8) { animation-delay:1.05s; } .sticky:nth-child(9) { animation-delay:1.2s; }
+  @keyframes noteIn { from { opacity:0; transform:rotate(var(--rot,0deg)) scale(.55) translateY(4vmin); } to { opacity:1; transform:rotate(var(--rot,0deg)); } }
+  .news-desk { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
+  .news-desk video { width:100%; height:24vmin; object-fit:cover; display:block; }
+  .headline { animation: bnIn .6s cubic-bezier(.2,1.2,.4,1) both; }
+  @keyframes bnIn { from { opacity:0; transform:translateX(-6vmin); } to { opacity:1; transform:none; } }
+  .bn-tag { background:#c8102e; color:#fff; font-size:1.5vmin; font-weight:900; letter-spacing:.08em; padding:.25vmin .8vmin; border-radius:.5vmin; vertical-align:middle; }
   .headlines { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.2vmin; overflow:hidden; }
   .headlines .h { font-size:2.2vmin; font-weight:900; letter-spacing:.12em; color:#25d0e8; margin-bottom:1.4vmin; }
   .headlines.full { flex:1; min-height:0; }
@@ -627,11 +652,17 @@ function reminderRows(){
   }
   return html;
 }
+function startTodayAnim(){
+  const panel = document.querySelector('#panelHost .panel.active');
+  if (!panel) return;
+  panel.querySelectorAll('.col-card, .evt-row, .rem-row, .empty-note').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+}
 function renderTodayPanel(){
   const now = new Date();
   const tom = new Date(now); tom.setDate(tom.getDate() + 1);
   const head = d => '<span class="dow">' + DAYS[d.getDay()] + '</span> ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
   return '<div class="panel-title">📅 <span class="accent">Today</span> &amp; Tomorrow</div>' +
+    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-presenter-poster.webp"><source src="tv-event-images/panel-today-presenter-tv-loop.mp4" type="video/mp4"></video></div>' +
     '<div class="cols">' +
       '<div class="col-card"><div class="col-head">' + head(now) + '</div>' + agendaRows(todayStr()) + reminderRows() + '</div>' +
       '<div class="col-card"><div class="col-head">' + head(tom) + '</div>' + agendaRows(dstr(tom)) + '</div>' +
@@ -820,7 +851,7 @@ function wxCard(row, big){
   const c = row.j.current, w = WCODE[c.weather_code] || ['🌤️','—'];
   const tonightLow = Math.round(row.j.daily.temperature_2m_min[0]);
   let html = '<div class="wx-card"><div class="wx-place">' + row.p.name + ', LA</div>' +
-    '<div class="wx-temp">' + w[0] + ' ' + Math.round(c.temperature_2m) + '°F</div>' +
+    '<div class="wx-temp">' + w[0] + ' <span class="n" data-temp="' + Math.round(c.temperature_2m) + '">' + Math.round(c.temperature_2m) + '</span>°F</div>' +
     '<div class="wx-cond">' + w[1] + '</div>' +
     '<div class="wx-meta">Humidity ' + c.relative_humidity_2m + '% • Wind ' + Math.round(c.wind_speed_10m) + ' mph</div>' +
     '<div class="wx-low">Tonight\'s low: <span class="n">' + tonightLow + '°F</span></div>';
@@ -835,9 +866,38 @@ function wxCard(row, big){
   }).join('') + '</div></div>';
   return html;
 }
+function wxVideoFor(code){
+  const cond = (code === 45 || code === 48) ? 'fog' : (code >= 51 && code <= 99 && code !== 71 && code !== 73 && code !== 75 && code !== 77 && code !== 85 && code !== 86) ? 'rain' : 'sunny';
+  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const style = ['dogs', 'weatherman', 'pond'][doy % 3];
+  const v = {
+    dogs: { sunny: 'panel-weather-dogs-sunny', rain: 'panel-weather-dogs-rain', fog: 'panel-weather-dogs-fog' },
+    weatherman: { sunny: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', fog: 'panel-weather-weatherman-rain' },
+    pond: { sunny: 'panel-weather-pond-sunny', rain: 'panel-weather-pond-rain', fog: 'panel-weather-pond-rain' }
+  }[style][cond];
+  return 'tv-event-images/' + v;
+}
+function startWeatherAnim(){
+  const panel = document.querySelector('#panelHost .panel.active');
+  if (!panel) return;
+  panel.querySelectorAll('.wx-card, .wx-day').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+  panel.querySelectorAll('.wx-temp .n').forEach((num) => {
+    const target = parseInt(num.dataset.temp, 10);
+    if (isNaN(target)) return;
+    const t0 = performance.now(), dur = 1100;
+    const tick = (now) => {
+      const k = Math.min(1, Math.max(0, (now - t0) / dur));
+      num.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
 function renderWeatherPanel(){
   if (!weatherData || !weatherData.length) return '';
+  const vbase = wxVideoFor(weatherData[0].j.current.weather_code);
   return '<div class="panel-title">🌤️ Local <span class="accent">Weather</span></div>' +
+    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video></div>' +
     '<div class="wx-main">' + wxCard(weatherData[0], true) + (weatherData[1] ? wxCard(weatherData[1], false) : '') + '</div>';
 }
 
@@ -874,22 +934,36 @@ function renderTicker(){
 }
 
 /* ================= MESSAGE BOARD + NEWS (separate slots) ================= */
+function startBoardAnim(){
+  const panel = document.querySelector('#panelHost .panel.active');
+  if (!panel) return;
+  panel.querySelectorAll('.sticky').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+}
 function renderBoardPanel(){
   const shownNotes = notes.slice(0, 9);
   if (!shownNotes.length) return '';
   const notesHtml = '<div class="notes-grid wide">' + shownNotes.map(n => {
     const rot = (typeof n.rot === 'number' ? n.rot : 0);
     const meta = [n.from ? 'From ' + n.from : '', n.to && n.to !== 'family' ? 'To ' + n.to : ''].filter(Boolean).join(' • ');
-    return '<div class="sticky" style="background:' + esc(n.color || '#fde047') + '; transform:rotate(' + rot + 'deg);">' +
+    return '<div class="sticky" style="background:' + esc(n.color || '#fde047') + '; --rot:' + rot + 'deg;">' +
       '<div class="txt">' + esc(n.text) + '</div>' + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + '</div>';
   }).join('') + '</div>';
-  return '<div class="panel-title">📌 Family <span class="accent">Message Board</span></div>' + notesHtml;
+  return '<div class="panel-title">📌 Family <span class="accent">Message Board</span></div>' +
+    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-board-mailman-poster.webp"><source src="tv-event-images/panel-board-mailman-tv-loop.mp4" type="video/mp4"></video></div>' + notesHtml;
+}
+function startNewsAnim(){
+  const panel = document.querySelector('#panelHost .panel.active');
+  if (!panel) return;
+  panel.querySelectorAll('.headline').forEach((el) => {
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  });
 }
 function renderHeadlinesPanel(){
   if (!headlines.length) return '';
   return '<div class="panel-title">📰 Louisiana <span class="accent">News</span></div>' +
+    '<div class="news-desk"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-news-desk-poster.webp"><source src="tv-event-images/panel-news-desk-tv-loop.mp4" type="video/mp4"></video></div>' +
     '<div class="headlines full">' +
-    headlines.slice(0, 8).map(h => '<div class="headline">' + esc(h) + '</div>').join('') + '</div>';
+    headlines.slice(0, 8).map((h, i) => '<div class="headline" style="animation-delay:' + (i * 0.3) + 's"><span class="bn-tag">BREAKING</span> ' + esc(h) + '</div>').join('') + '</div>';
 }
 function renderPhotoPanel(){
   let src = 'family-photo.jpg';
@@ -928,6 +1002,10 @@ function showPanel(i){
   });
   if (panelDefs[i] && panelDefs[i].id === 'calendar'){ startWp(); } else { stopWp(); }
   if (panelDefs[i] && panelDefs[i].id === 'countdowns'){ startCountdownAnim(); }
+  if (panelDefs[i] && panelDefs[i].id === 'news'){ startNewsAnim(); }
+  if (panelDefs[i] && panelDefs[i].id === 'weather'){ startWeatherAnim(); }
+  if (panelDefs[i] && panelDefs[i].id === 'today'){ startTodayAnim(); }
+  if (panelDefs[i] && panelDefs[i].id === 'board'){ startBoardAnim(); }
 }
 function nextPanel(step){
   if (!panelDefs.length) return;
