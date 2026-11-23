@@ -104,6 +104,11 @@
 
   /* Countdowns */
   .cd-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:2vmin; flex:1; min-height:0; align-content:start; overflow:hidden; }
+  .cd-clock { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
+  .cd-clock video { width:100%; height:20vmin; object-fit:cover; display:block; }
+  .cd-clock-title { position:absolute; top:1vmin; left:0; right:0; text-align:center; font-size:4.6vmin; font-weight:900; letter-spacing:.6vmin; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.85), 0 0 24px rgba(255,60,60,.55); }
+  .cd-card { animation: cdIn .7s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes cdIn { from { opacity:0; transform:translateY(4vmin) scale(.85); } to { opacity:1; transform:none; } }
   .cd-card { background:#14141d; border:1px solid #262633; border-radius:1.6vmin; padding:2.4vmin; display:flex; align-items:center; gap:2.4vmin; }
   .cd-days { text-align:center; min-width:16vmin; }
   .cd-days .n { font-size:7vmin; font-weight:900; line-height:1; color:#25d0e8; }
@@ -479,6 +484,8 @@ function renderWeeklyPlannerPanel(){
     const d = new Date(start); d.setDate(d.getDate() + i);
     const ds = dstr(d);
     const evs = eventsOn(ds).slice().sort((a,b) => ((a.time||'') < (b.time||'') ? -1 : 1));
+    const relCd = (typeof countdowns !== 'undefined' ? countdowns : []).find(c => c.release && dstr(countdownTarget(c)) === ds);
+    if (relCd && !evs.some(e => e.title === relCd.title)) evs.unshift({ title: relCd.title, who: 'dustin', time: '' });
     const first = evs[0] || null;
     let media = null, mediaEvt = null;
     for (const e of evs){ const m = eventMediaFor(e.title); if (m){ media = m; mediaEvt = e; break; } }
@@ -636,6 +643,13 @@ function renderTodayPanel(){
    meetings animate per Dustin's Nov 21 call) member-color cards. Unmatched events are
    plain too until a loop is made for them. */
 const EVENT_MEDIA = [
+  { keys: ['music release', 'release day', 'album release', 'single release', 'song drop', 'new song', 'dustinnope music'], video: 'tv-event-images/music-release-day-tv-loop.mp4', poster: 'tv-event-images/music-release-day-poster.webp' },
+  { keys: ['funeral', 'memorial', 'wake', 'burial', 'visitation'], video: 'tv-event-images/funeral-serious-tv-loop.mp4', poster: 'tv-event-images/funeral-serious-poster.webp' },
+  { keys: ['court', 'hearing', 'judge'], video: 'tv-event-images/court-serious-tv-loop.mp4', poster: 'tv-event-images/court-serious-poster.webp' },
+  { keys: ['doctor', 'cardiolog', 'clinic', 'hospital', 'surgery'], video: 'tv-event-images/doctor-tv-loop.mp4', poster: 'tv-event-images/doctor-poster.webp' },
+  { keys: ['meds', 'medicine', 'medication', 'readings', 'blood pressure', 'weight', 'weigh'], video: 'tv-event-images/meds-readings-tv-loop.mp4', poster: 'tv-event-images/meds-readings-poster.webp' },
+  { keys: ['pharmacy', 'prescription', 'refill'], video: 'tv-event-images/pharmacy-tv-loop.mp4', poster: 'tv-event-images/pharmacy-poster.webp' },
+  { keys: ['bill', 'payment', 'insurance', 'disability', 'ssdi', 'medicare', 'medicaid'], video: 'tv-event-images/bills-money-tv-loop.mp4', poster: 'tv-event-images/bills-money-poster.webp' },
   { keys: ['thanksgiving', 'turkey day'], video: 'tv-event-images/thanksgiving-animated-tv-loop.mp4', poster: 'tv-event-images/thanksgiving-poster.webp' },
   { keys: ['physical therapy', 'physiofit', 'rehab'], video: 'tv-event-images/pt-animated-tv-loop.mp4', poster: 'tv-event-images/pt-poster.webp' },
   { keys: ['dog', 'play-doh', 'cookie-doh', 'astro-doh', 'astro', 'p-d-d', 'vet', 'groom'], video: 'tv-event-images/dogs-animated-tv-loop.mp4', poster: 'tv-event-images/dogs-poster.webp' },
@@ -645,13 +659,11 @@ const EVENT_MEDIA = [
   { keys: ['party', 'celebration', 'get-together', 'get together', 'cookout', 'bbq', 'barbecue', 'boil'], video: 'tv-event-images/party-crawfish-tv-loop.mp4', poster: 'tv-event-images/party-crawfish-poster.webp' },
   { keys: ['lawyer', 'attorney', 'legal'], video: 'tv-event-images/lawyer-gator-tv-loop.mp4', poster: 'tv-event-images/lawyer-gator-poster.webp' }
 ];
-const PRIVATE_KEYS = ['med', 'reading', 'blood pressure', 'weight', 'doctor', 'cardiolog', 'clinic', 'hospital', 'surgery', 'prescription', 'pharmacy', 'insurance', 'bill', 'payment', 'disability', 'court', 'ssdi', 'medicare', 'medicaid'];
 const DUSTIN_BIRTHDAY_MEDIA = { video: 'tv-event-images/birthday-dustin-rockstar-tv-loop.mp4', poster: 'tv-event-images/birthday-dustin-rockstar-poster.webp' };
 function eventMediaFor(title){
   const t = ' ' + String(title || '').toLowerCase() + ' ';
-  if (/(^|[^a-z])pt([^a-z]|$)/.test(t)) return EVENT_MEDIA[1];
+  if (/(^|[^a-z])pt([^a-z]|$)/.test(t)) return EVENT_MEDIA.find(m => m.keys.indexOf('physical therapy') !== -1);
   if (t.indexOf('dustin') !== -1 && (t.indexOf('birthday') !== -1 || t.indexOf('founder day') !== -1)) return DUSTIN_BIRTHDAY_MEDIA;
-  for (const k of PRIVATE_KEYS) if (t.indexOf(k) !== -1) return null;
   for (const m of EVENT_MEDIA) for (const k of m.keys) if (t.indexOf(k) !== -1) return m;
   return null;
 }
@@ -742,23 +754,40 @@ function renderChristmasCountdownPanel(){
     '<div class="xmas-surprise">' + esc(surprise) + '</div></div></div>';
 }
 
+function startCountdownAnim(){
+  const panel = document.querySelector('#panelHost .panel.active');
+  if (!panel) return;
+  panel.querySelectorAll('.cd-card').forEach((card, i) => {
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    const num = card.querySelector('.cd-days .n');
+    const target = parseInt(num && num.dataset.days, 10);
+    if (!num || isNaN(target) || target <= 0) return;
+    const t0 = performance.now() + i * 350, dur = 1100;
+    const tick = (now) => {
+      const k = Math.min(1, Math.max(0, (now - t0) / dur));
+      num.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
 function renderCountdownPanel(){
   const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
     .filter(r => !(r.days < 0 && !r.c.release)) /* passed non-releases stay off the TV */
     .sort((a, b) => a.days - b.days)
     .slice(0, 6);
   if (!rows.length) return '';
-  const cards = rows.map(r => {
+  const cards = rows.map((r, i) => {
     const daysHtml = r.days > 0
-      ? '<div class="cd-days"><div class="n">' + r.days + '</div><div class="u">' + (r.days === 1 ? 'DAY' : 'DAYS') + '</div></div>'
+      ? '<div class="cd-days"><div class="n" data-days="' + r.days + '">' + r.days + '</div><div class="u">' + (r.days === 1 ? 'DAY' : 'DAYS') + '</div></div>'
       : r.days === 0
       ? '<div class="cd-days"><div class="special">Today! 🎉</div></div>'
       : '<div class="cd-days"><div class="special">Out now! 🎵</div></div>';
-    return '<div class="cd-card">' + daysHtml +
+    return '<div class="cd-card" style="animation-delay:' + (i * 0.35) + 's">' + daysHtml +
       '<div><div class="cd-title">' + esc(r.c.title) + '</div>' +
       '<div class="cd-date">' + fmtCdDate(r.target) + (r.c.yearly ? ' • every year' : '') + '</div></div></div>';
   }).join('');
-  return '<div class="panel-title">⏳ Counting <span class="accent">Down</span></div><div class="cd-grid">' + cards + '</div>';
+  return '<div class="panel-title">⏳ Counting <span class="accent">Down</span></div><div class="cd-clock"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/countdown-clock-poster.webp"><source src="tv-event-images/countdown-clock-tv-loop.mp4" type="video/mp4"></video><div class="cd-clock-title">COUNTDOWN</div></div><div class="cd-grid">' + cards + '</div>';
 }
 
 /* ================= WEATHER ================= */
@@ -895,6 +924,7 @@ function showPanel(i){
     if (inActive){ const pr = v.play(); if (pr) pr.catch(() => {}); } else { v.pause(); }
   });
   if (panelDefs[i] && panelDefs[i].id === 'calendar'){ startWp(); } else { stopWp(); }
+  if (panelDefs[i] && panelDefs[i].id === 'countdowns'){ startCountdownAnim(); }
 }
 function nextPanel(step){
   if (!panelDefs.length) return;
