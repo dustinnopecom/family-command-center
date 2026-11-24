@@ -183,6 +183,17 @@
   .bd-note:nth-child(2) { animation-delay:.2s; } .bd-note:nth-child(3) { animation-delay:.4s; } .bd-note:nth-child(4) { animation-delay:.6s; } .bd-note:nth-child(5) { animation-delay:.8s; }
   @keyframes bdIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
   .bd-note .meta { font-size:1.4vmin; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; }
+  .wx-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
+  .wx-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .wx-screen { position:absolute; left:60%; top:66%; width:36%; height:28%; z-index:2; background:rgba(5,10,25,.82); border:1px solid rgba(120,200,255,.5); border-radius:1.2vmin; box-shadow:0 0 3vmin rgba(60,160,255,.45); padding:1.2vmin 1.5vmin; overflow:hidden; color:#fff; }
+  .wx-chip { display:none; }
+  .wx-chip.on { display:block; animation: wxChipIn .6s both; }
+  @keyframes wxChipIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
+  .wx-chip .place { font-size:2vmin; font-weight:800; letter-spacing:.18em; color:#7dd3fc; text-transform:uppercase; }
+  .wx-chip .temp { font-size:4.6vmin; font-weight:800; line-height:1.05; }
+  .wx-chip .cond { font-size:2vmin; font-weight:700; }
+  .wx-chip .meta2 { font-size:1.55vmin; color:#cbd5e1; margin-top:.3vmin; }
+  .wx-chip .freeze { font-size:1.6vmin; font-weight:800; color:#fca5a5; margin-top:.4vmin; }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
   .panel-vid video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -935,10 +946,13 @@ function wxCard(row, big){
   }).join('') + '</div></div>';
   return html;
 }
+function wxStyleFor(){
+  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return ['dogs', 'weatherman', 'pond'][doy % 3];
+}
 function wxVideoFor(code){
   const cond = (code === 45 || code === 48) ? 'fog' : (code >= 51 && code <= 99 && code !== 71 && code !== 73 && code !== 75 && code !== 77 && code !== 85 && code !== 86) ? 'rain' : 'sunny';
-  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-  const style = ['dogs', 'weatherman', 'pond'][doy % 3];
+  const style = wxStyleFor();
   const v = {
     dogs: { sunny: 'panel-weather-dogs-sunny', rain: 'panel-weather-dogs-rain', fog: 'panel-weather-dogs-fog' },
     weatherman: { sunny: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', fog: 'panel-weather-weatherman-rain' },
@@ -946,9 +960,18 @@ function wxVideoFor(code){
   }[style][cond];
   return 'tv-event-images/' + v;
 }
+let wxSwapTimer = null;
 function startWeatherAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
+  if (wxSwapTimer){ clearInterval(wxSwapTimer); wxSwapTimer = null; }
+  const chips = panel.querySelectorAll('.wx-screen .wx-chip');
+  if (chips.length){
+    let idx = 0;
+    const show = (i) => { chips.forEach((c, k) => c.classList.toggle('on', k === i)); };
+    show(0);
+    if (chips.length > 1) wxSwapTimer = setInterval(() => { idx = (idx + 1) % chips.length; show(idx); }, 8000);
+  }
   panel.querySelectorAll('.wx-card, .wx-day').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
   panel.querySelectorAll('.wx-temp .n').forEach((num) => {
     const target = parseInt(num.dataset.temp, 10);
@@ -962,9 +985,23 @@ function startWeatherAnim(){
     requestAnimationFrame(tick);
   });
 }
+function wxChip(row){
+  const c = row.j.current, w = WCODE[c.weather_code] || ['🌤️','—'];
+  const low = Math.round(row.j.daily.temperature_2m_min[0]);
+  return '<div class="wx-chip"><div class="place">' + row.p.name + ', LA</div>' +
+    '<div class="temp">' + w[0] + ' <span class="n" data-temp="' + Math.round(c.temperature_2m) + '">' + Math.round(c.temperature_2m) + '</span>°F</div>' +
+    '<div class="cond">' + w[1] + '</div>' +
+    '<div class="meta2">Humidity ' + c.relative_humidity_2m + '% • Wind ' + Math.round(c.wind_speed_10m) + ' mph • Tonight\'s low ' + low + '°F</div>' +
+    (low <= 32 ? '<div class="freeze">🥶 HARD FREEZE TONIGHT — pond shutdown</div>' : '') + '</div>';
+}
 function renderWeatherPanel(){
   if (!weatherData || !weatherData.length) return '';
   const vbase = wxVideoFor(weatherData[0].j.current.weather_code);
+  if (wxStyleFor() === 'weatherman'){
+    const chips = weatherData.slice(0, 2).map(r => wxChip(r)).join('');
+    return '<div class="wx-fs"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video>' +
+      '<div class="wx-screen">' + chips + '</div></div>';
+  }
   return '<div class="panel-title">🌤️ Local <span class="accent">Weather</span></div>' +
     '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video></div>' +
     '<div class="wx-main">' + wxCard(weatherData[0], true) + (weatherData[1] ? wxCard(weatherData[1], false) : '') + '</div>';
