@@ -593,7 +593,7 @@ function renderWeeklyPlannerPanel(){
       const amb = WP_AMBIENTS[Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) % WP_AMBIENTS.length];
       body = '<video autoplay muted loop playsinline preload="auto" poster="' + amb.poster + '" src="' + amb.video + '"></video><div class="wp-cshade"></div>' +
         (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
-        '<div class="wp-cevt"><div class="what">🐾 FAMILY DAY</div><div class="when">Nothing planned</div></div>';
+        '<div class="wp-cevt"><div class="what">Nothing\'s planned</div></div>';
     }
     cards += '<div class="wp-card' + (i === wpIdx && !wpOverview ? ' active' : '') + '">' +
       '<div class="wp-chead" style="background:' + WP_HEAD_COLORS[i] + '">' + esc(head) + '</div>' +
