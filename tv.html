@@ -157,6 +157,20 @@
   .mq-line:nth-child(3) { animation-delay:.25s; } .mq-line:nth-child(4) { animation-delay:.5s; } .mq-line:nth-child(5) { animation-delay:.75s; }
   @keyframes mqIn { from { opacity:0; } to { opacity:1; } }
   .mq-empty { font-size:1.45vmin; font-weight:700; letter-spacing:.05em; color:#475569; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
+  .cd-fs .cd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; animation: mqZoom 24s ease-in-out infinite alternate; }
+  .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
+  .cd-scene-clocktower .cd-board { left:42.5%; top:8%; width:20%; height:26%; }
+  .cd-scene-rocket .cd-board { left:40.5%; top:24%; width:22.5%; height:37%; }
+  .cd-scene-scoreboard .cd-board { left:55.5%; top:7%; width:33.5%; height:51%; }
+  .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; }
+  .cd-scene-clocktower .cd-hero-num { font-size:5vmin; }
+  .cd-hero-unit { font-size:2vmin; font-weight:800; letter-spacing:.3em; color:#b91c1c; text-transform:uppercase; }
+  .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cd-scene-clocktower .cd-hero-title { font-size:1.6vmin; }
+  .cd-sub { font-size:1.6vmin; font-weight:700; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cd-scene-clocktower .cd-sub { display:none; }
+  .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
   .panel-vid video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -828,37 +842,40 @@ function renderChristmasCountdownPanel(){
 function startCountdownAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
-  panel.querySelectorAll('.cd-card').forEach((card, i) => {
-    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
-    const num = card.querySelector('.cd-days .n');
-    const target = parseInt(num && num.dataset.days, 10);
-    if (!num || isNaN(target) || target <= 0) return;
-    const t0 = performance.now() + i * 350, dur = 1100;
-    const tick = (now) => {
-      const k = Math.min(1, Math.max(0, (now - t0) / dur));
-      num.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
-      if (k < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
+  const num = panel.querySelector('.cd-hero-num');
+  const target = parseInt(num && num.dataset.days, 10);
+  if (!num || isNaN(target) || target <= 0) return;
+  const t0 = performance.now(), dur = 1100;
+  const tick = (now) => {
+    const k = Math.min(1, Math.max(0, (now - t0) / dur));
+    num.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
+const CD_SCENES = [
+  { key: 'clocktower', img: 'tv-event-images/panel-countdown-clocktower.webp' },
+  { key: 'rocket', img: 'tv-event-images/panel-countdown-rocket.webp' },
+  { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp' }
+];
 function renderCountdownPanel(){
   const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
     .filter(r => !(r.days < 0 && !r.c.release)) /* passed non-releases stay off the TV */
     .sort((a, b) => a.days - b.days)
-    .slice(0, 6);
+    .slice(0, 3);
   if (!rows.length) return '';
-  const cards = rows.map((r, i) => {
-    const daysHtml = r.days > 0
-      ? '<div class="cd-days"><div class="n" data-days="' + r.days + '">' + r.days + '</div><div class="u">' + (r.days === 1 ? 'DAY' : 'DAYS') + '</div></div>'
-      : r.days === 0
-      ? '<div class="cd-days"><div class="special">Today! 🎉</div></div>'
-      : '<div class="cd-days"><div class="special">Out now! 🎵</div></div>';
-    return '<div class="cd-card" style="animation-delay:' + (i * 0.35) + 's">' + daysHtml +
-      '<div><div class="cd-title">' + esc(r.c.title) + '</div>' +
-      '<div class="cd-date">' + fmtCdDate(r.target) + (r.c.yearly ? ' • every year' : '') + '</div></div></div>';
-  }).join('');
-  return '<div class="panel-title">⏳ Counting <span class="accent">Down</span></div><div class="cd-clock"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/countdown-clock-poster.webp"><source src="tv-event-images/countdown-clock-tv-loop.mp4" type="video/mp4"></video><div class="cd-clock-title">COUNTDOWN</div></div><div class="cd-grid">' + cards + '</div>';
+  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
+  const scene = CD_SCENES[doy % CD_SCENES.length];
+  const hero = rows[0];
+  const heroHtml = hero.days > 0
+    ? '<div class="cd-hero-num" data-days="' + hero.days + '">' + hero.days + '</div><div class="cd-hero-unit">' + (hero.days === 1 ? 'Day' : 'Days') + ' to</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
+    : hero.days === 0
+    ? '<div class="cd-hero-special">Today! 🎉</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
+    : '<div class="cd-hero-special">Out now! 🎵</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>';
+  const subs = rows.slice(1).map(r => '<div class="cd-sub">' + (r.days > 0 ? r.days + ' days — ' : r.days === 0 ? 'Today — ' : 'Out now — ') + esc(r.c.title) + '</div>').join('');
+  return '<div class="cd-fs cd-scene-' + scene.key + '">' +
+    '<img class="cd-bg" src="' + scene.img + '" alt="">' +
+    '<div class="cd-board">' + heroHtml + subs + '</div></div>';
 }
 
 /* ================= WEATHER ================= */
