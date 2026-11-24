@@ -220,6 +220,14 @@
   .news-desk { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .news-desk { display:flex; justify-content:center; background:#05050a; }
   .news-desk video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
+  .news-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
+  .news-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .news-ticker { position:absolute; left:0; right:0; bottom:0; z-index:2; display:flex; align-items:stretch; background:#7f1d1d; border-top:3px solid #fbbf24; overflow:hidden; }
+  .news-ticker .bug { flex:none; display:flex; align-items:center; padding:1vmin 1.6vmin; background:#450a0a; color:#fff; font-size:2vmin; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
+  .news-ticker .track-wrap { flex:1; overflow:hidden; display:flex; align-items:center; }
+  .news-ticker .track { display:inline-block; white-space:nowrap; color:#fff; font-size:2.1vmin; font-weight:700; padding:1vmin 0; animation: tickScroll 55s linear infinite; }
+  .news-ticker .track b { color:#fde047; }
+  @keyframes tickScroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
   .headline { animation: bnIn .6s cubic-bezier(.2,1.2,.4,1) both; }
   @keyframes bnIn { from { opacity:0; transform:translateX(-6vmin); } to { opacity:1; transform:none; } }
   .bn-tag { background:#c8102e; color:#fff; font-size:1.5vmin; font-weight:900; letter-spacing:.08em; padding:.25vmin .8vmin; border-radius:.5vmin; vertical-align:middle; }
@@ -731,10 +739,9 @@ function renderTodayPanel(){
   const tom = new Date(now); tom.setDate(tom.getDate() + 1);
   return '<div class="today-fs">' +
     '<video class="mq-bg" autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-marquee-anim-poster.webp"><source src="tv-event-images/panel-today-marquee-tv-loop.mp4" type="video/mp4"></video>' +
-    '<div class="mq-theater"><div class="name">Gatlin Family</div><div class="sub">Today &amp; Tomorrow</div></div>' +
     '<div class="marquee-board">' +
-      '<div class="mq-col"><h3>Today • ' + (now.getMonth()+1) + '/' + now.getDate() + '</h3>' + mqLines(todayStr()) + '</div>' +
-      '<div class="mq-col"><h3>Tomorrow • ' + (tom.getMonth()+1) + '/' + tom.getDate() + '</h3>' + mqLines(dstr(tom)) + '</div>' +
+      '<div class="mq-col"><h3>' + DAYS[now.getDay()].slice(0,3) + ' • ' + (now.getMonth()+1) + '/' + now.getDate() + '</h3>' + mqLines(todayStr()) + '</div>' +
+      '<div class="mq-col"><h3>' + DAYS[tom.getDay()].slice(0,3) + ' • ' + (tom.getMonth()+1) + '/' + tom.getDate() + '</h3>' + mqLines(dstr(tom)) + '</div>' +
     '</div></div>';
 }
 
@@ -894,7 +901,7 @@ function renderCountdownPanel(){
   const scene = CD_SCENES[doy % CD_SCENES.length];
   const hero = rows[0];
   const heroHtml = hero.days > 0
-    ? '<div class="cd-hero-num" data-days="' + hero.days + '">' + hero.days + '</div><div class="cd-hero-unit">' + (hero.days === 1 ? 'Day' : 'Days') + ' to</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
+    ? '<div class="cd-hero-num" data-days="' + hero.days + '">' + hero.days + '</div><div class="cd-hero-unit">' + (hero.days === 1 ? 'Day' : 'Days') + ' till</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
     : hero.days === 0
     ? '<div class="cd-hero-special">Today! 🎉</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
     : '<div class="cd-hero-special">Out now! 🎵</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>';
@@ -1068,16 +1075,17 @@ function renderBoardPanel(){
 function startNewsAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
-  panel.querySelectorAll('.headline').forEach((el) => {
+  panel.querySelectorAll('.news-ticker .track').forEach((el) => {
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   });
 }
 function renderHeadlinesPanel(){
   if (!headlines.length) return '';
-  return '<div class="panel-title">📰 Louisiana <span class="accent">News</span></div>' +
-    '<div class="news-desk"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-news-desk-poster.webp"><source src="tv-event-images/panel-news-desk-tv-loop.mp4" type="video/mp4"></video></div>' +
-    '<div class="headlines full">' +
-    headlines.slice(0, 8).map((h, i) => '<div class="headline" style="animation-delay:' + (i * 0.3) + 's"><span class="bn-tag">BREAKING</span> ' + esc(h) + '</div>').join('') + '</div>';
+  const items = headlines.slice(0, 8).map(h => '<b>BREAKING</b> ' + esc(h)).join(' &nbsp;&nbsp;•&nbsp;&nbsp; ');
+  const run = items + ' &nbsp;&nbsp;•&nbsp;&nbsp; ';
+  return '<div class="news-fs">' +
+    '<video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-news-desk-poster.webp"><source src="tv-event-images/panel-news-desk-tv-loop.mp4" type="video/mp4"></video>' +
+    '<div class="news-ticker"><div class="bug">Gatlin News</div><div class="track-wrap"><div class="track">' + run + run + '</div></div></div></div>';
 }
 function renderPhotoPanel(){
   let src = 'family-photo.jpg';
