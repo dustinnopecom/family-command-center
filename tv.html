@@ -142,9 +142,9 @@
   .sticky .txt { font-size:2.2vmin; font-weight:700; line-height:1.35; }
   .sticky .meta { font-size:1.5vmin; font-weight:800; opacity:.65; margin-top:1vmin; text-transform:uppercase; letter-spacing:.08em; }
   .today-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
-  .today-fs .mq-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; animation: mqZoom 24s ease-in-out infinite alternate; }
+  .today-fs .mq-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
   @keyframes mqZoom { from { transform:scale(1); } to { transform:scale(1.06); } }
-  .marquee-board { position:absolute; left:35.6%; top:36.5%; width:34.8%; height:18.5%; display:flex; z-index:2; animation: mqGlow 3s ease-in-out infinite; }
+  .marquee-board { position:absolute; left:34%; top:38%; width:33%; height:15%; display:flex; z-index:2; }
   .mq-theater { position:absolute; left:35.6%; top:29%; width:34.8%; text-align:center; z-index:2; }
   .mq-theater .name { font-size:3vmin; font-weight:800; letter-spacing:.18em; color:#fff; text-transform:uppercase; text-shadow:0 0 8px #ff2d55, 0 0 24px #ff2d55, 0 2px 10px rgba(0,0,0,.85); animation: mqNeon 2.5s ease-in-out infinite; }
   .mq-theater .sub { font-size:1.8vmin; font-weight:700; letter-spacing:.42em; color:#a5f3fc; text-transform:uppercase; text-shadow:0 0 10px #22d3ee, 0 0 26px #22d3ee, 0 2px 8px rgba(0,0,0,.85); margin-top:.4vmin; }
@@ -158,13 +158,14 @@
   @keyframes mqIn { from { opacity:0; } to { opacity:1; } }
   .mq-empty { font-size:1.45vmin; font-weight:700; letter-spacing:.05em; color:#475569; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
-  .cd-fs .cd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; animation: mqZoom 24s ease-in-out infinite alternate; }
+  .cd-fs .cd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
   .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
-  .cd-scene-clocktower .cd-board { left:42.5%; top:8%; width:20%; height:26%; }
-  .cd-scene-rocket .cd-board { left:40.5%; top:24%; width:22.5%; height:37%; }
-  .cd-scene-scoreboard .cd-board { left:55.5%; top:7%; width:33.5%; height:51%; }
-  .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; }
+  .cd-scene-clocktower .cd-board { left:43%; top:9%; width:19%; height:21%; }
+  .cd-scene-rocket .cd-board { left:38%; top:30%; width:21%; height:28%; }
+  .cd-scene-scoreboard .cd-board { left:54%; top:8%; width:36%; height:58%; }
+  .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; text-shadow:0 0 1vmin rgba(255,240,180,.45); }
   .cd-scene-clocktower .cd-hero-num { font-size:5vmin; }
+  .cd-scene-rocket .cd-hero-num { font-size:4.5vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.6vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.7vmin; } .cd-scene-rocket .cd-sub { font-size:1.35vmin; }
   .cd-hero-unit { font-size:2vmin; font-weight:800; letter-spacing:.3em; color:#b91c1c; text-transform:uppercase; }
   .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cd-scene-clocktower .cd-hero-title { font-size:1.6vmin; }
@@ -173,26 +174,27 @@
   .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
   .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .bd-fs .bd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-  .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:flex-start; overflow:hidden; padding:1.2vmin 1.4vmin; background:rgba(226,232,240,.88); border-radius:1vmin; box-shadow:0 0 3vmin rgba(180,220,255,.55); }
-  .bd-scene-livingroom .bd-screen { left:63%; top:6%; width:31%; height:55%; }
-  .bd-scene-porch .bd-screen { left:74%; top:6%; width:16%; height:60%; }
-  .bd-scene-kitchen .bd-screen { left:63%; top:6%; width:29%; height:48%; }
+  .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:flex-start; overflow:hidden; padding:.6vmin .8vmin; background:transparent; border:0; box-shadow:none; }
+  .bd-scene-livingroom .bd-screen { left:62%; top:6%; width:30%; height:52%; }
+  .bd-scene-porch .bd-screen { left:63.5%; top:14%; width:21%; height:54%; }
+  .bd-scene-kitchen .bd-screen { left:59%; top:5%; width:34%; height:53%; }
   .bd-scene-porch .bd-note { font-size:1.45vmin; line-height:1.35; }
   .bd-scene-porch .bd-note .meta { font-size:1.25vmin; }
-  .bd-note { font-size:1.9vmin; line-height:1.4; font-weight:600; color:#1e293b; border-bottom:1px dashed rgba(30,41,59,.35); padding:.4vmin 0; animation: bdIn .7s both; }
+  .bd-note { font-size:1.9vmin; line-height:1.4; font-weight:600; color:#1e293b; border-bottom:1px dashed rgba(30,41,59,.35); padding:.4vmin 0; animation: bdIn .7s both; text-shadow:0 0 .8vmin rgba(255,255,255,.8); }
   .bd-note:nth-child(2) { animation-delay:.2s; } .bd-note:nth-child(3) { animation-delay:.4s; } .bd-note:nth-child(4) { animation-delay:.6s; } .bd-note:nth-child(5) { animation-delay:.8s; }
   @keyframes bdIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
   .bd-note .meta { font-size:1.4vmin; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; }
   .wx-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .wx-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-  .wx-screen { position:absolute; left:60%; top:66%; width:36%; height:28%; z-index:2; background:rgba(5,10,25,.82); border:1px solid rgba(120,200,255,.5); border-radius:1.2vmin; box-shadow:0 0 3vmin rgba(60,160,255,.45); padding:1.2vmin 1.5vmin; overflow:hidden; color:#fff; }
+  .wx-screen { position:absolute; left:60%; top:66%; width:36%; height:28%; z-index:2; background:transparent; border:0; box-shadow:none; padding:0 1vmin; overflow:hidden; color:#fff; }
   .wx-chip { display:none; }
   .wx-chip.on { display:block; animation: wxChipIn .6s both; }
   @keyframes wxChipIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
-  .wx-chip .place { font-size:2vmin; font-weight:800; letter-spacing:.18em; color:#7dd3fc; text-transform:uppercase; }
+  .wx-chip .place { font-size:2vmin; font-weight:800; letter-spacing:.18em; color:#fff; text-transform:uppercase; }
   .wx-chip .temp { font-size:4.6vmin; font-weight:800; line-height:1.05; }
   .wx-chip .cond { font-size:2vmin; font-weight:700; }
-  .wx-chip .meta2 { font-size:1.55vmin; color:#cbd5e1; margin-top:.3vmin; }
+  .wx-chip .meta2 { font-size:1.55vmin; color:#e8eef5; margin-top:.3vmin; }
+  .wx-screen .place, .wx-screen .temp, .wx-screen .cond, .wx-screen .meta2, .wx-screen .freeze { text-shadow:0 1px 2px rgba(2,40,90,.95), 0 0 1.4vmin rgba(2,60,120,.8); }
   .wx-chip .freeze { font-size:1.6vmin; font-weight:800; color:#fca5a5; margin-top:.4vmin; }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
@@ -728,7 +730,7 @@ function renderTodayPanel(){
   const now = new Date();
   const tom = new Date(now); tom.setDate(tom.getDate() + 1);
   return '<div class="today-fs">' +
-    '<img class="mq-bg" src="tv-event-images/panel-today-marquee.webp" alt="">' +
+    '<video class="mq-bg" autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-marquee-anim-poster.webp"><source src="tv-event-images/panel-today-marquee-tv-loop.mp4" type="video/mp4"></video>' +
     '<div class="mq-theater"><div class="name">Gatlin Family</div><div class="sub">Today &amp; Tomorrow</div></div>' +
     '<div class="marquee-board">' +
       '<div class="mq-col"><h3>Today • ' + (now.getMonth()+1) + '/' + now.getDate() + '</h3>' + mqLines(todayStr()) + '</div>' +
@@ -878,8 +880,8 @@ function startCountdownAnim(){
   requestAnimationFrame(tick);
 }
 const CD_SCENES = [
-  { key: 'clocktower', img: 'tv-event-images/panel-countdown-clocktower.webp' },
-  { key: 'rocket', img: 'tv-event-images/panel-countdown-rocket.webp' },
+  { key: 'clocktower', img: 'tv-event-images/panel-countdown-clocktower.webp', video: 'tv-event-images/panel-countdown-clocktower-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-clocktower-anim-poster.webp' },
+  { key: 'rocket', img: 'tv-event-images/panel-countdown-rocket.webp', video: 'tv-event-images/panel-countdown-rocket-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-rocket-anim-poster.webp' },
   { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp', video: 'tv-event-images/panel-countdown-scoreboard-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-scoreboard-anim-poster.webp' }
 ];
 function renderCountdownPanel(){
@@ -1046,9 +1048,9 @@ function startBoardAnim(){
   panel.querySelectorAll('.bd-note').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
 }
 const BD_SCENES = [
-  { key: 'livingroom', video: 'tv-event-images/panel-board-livingroom-tv-loop.mp4', poster: 'tv-event-images/panel-board-livingroom-poster.webp' },
-  { key: 'porch', video: 'tv-event-images/panel-board-porch-tv-loop.mp4', poster: 'tv-event-images/panel-board-porch-poster.webp' },
-  { key: 'kitchen', video: 'tv-event-images/panel-board-kitchen-tv-loop.mp4', poster: 'tv-event-images/panel-board-kitchen-poster.webp' }
+  { key: 'livingroom', video: 'tv-event-images/panel-board-livingroom-tv-loop.mp4', poster: 'tv-event-images/panel-board-livingroom-anim-poster.webp' },
+  { key: 'porch', video: 'tv-event-images/panel-board-porch-tv-loop.mp4', poster: 'tv-event-images/panel-board-porch-anim-poster.webp' },
+  { key: 'kitchen', video: 'tv-event-images/panel-board-kitchen-tv-loop.mp4', poster: 'tv-event-images/panel-board-kitchen-anim-poster.webp' }
 ];
 function renderBoardPanel(){
   const shownNotes = notes.filter(n => !(n.text || '').toLowerCase().startsWith('welcome to the family command center')).slice(0, 4);
