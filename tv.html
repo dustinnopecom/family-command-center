@@ -171,6 +171,16 @@
   .cd-sub { font-size:1.6vmin; font-weight:700; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cd-scene-clocktower .cd-sub { display:none; }
   .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
+  .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
+  .bd-fs .bd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:flex-start; overflow:hidden; padding:1.2vmin 1.4vmin; }
+  .bd-scene-livingroom .bd-screen { left:60%; top:5%; width:35%; height:60%; }
+  .bd-scene-porch .bd-screen { left:63.5%; top:6%; width:28.5%; height:62%; }
+  .bd-scene-kitchen .bd-screen { left:57.5%; top:5%; width:35%; height:56%; }
+  .bd-note { font-size:1.9vmin; line-height:1.5; font-weight:600; color:#1e293b; border-bottom:1px dashed rgba(30,41,59,.35); padding:.5vmin 0; animation: bdIn .7s both; }
+  .bd-note:nth-child(2) { animation-delay:.2s; } .bd-note:nth-child(3) { animation-delay:.4s; } .bd-note:nth-child(4) { animation-delay:.6s; } .bd-note:nth-child(5) { animation-delay:.8s; }
+  @keyframes bdIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
+  .bd-note .meta { font-size:1.4vmin; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
   .panel-vid video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -727,6 +737,7 @@ const EVENT_MEDIA = [
   { keys: ['doctor', 'cardiolog', 'clinic', 'hospital', 'surgery'], video: 'tv-event-images/doctor-tv-loop.mp4', poster: 'tv-event-images/doctor-poster.webp' },
   { keys: ['meds', 'medicine', 'medication', 'readings', 'blood pressure', 'weight', 'weigh'], video: 'tv-event-images/meds-readings-tv-loop.mp4', poster: 'tv-event-images/meds-readings-poster.webp' },
   { keys: ['pharmacy', 'prescription', 'refill'], video: 'tv-event-images/pharmacy-tv-loop.mp4', poster: 'tv-event-images/pharmacy-poster.webp' },
+  { keys: ['payday', 'pay day', 'paycheck'], video: 'tv-event-images/payday-tv-loop.mp4', poster: 'tv-event-images/payday-poster.webp' },
   { keys: ['bill', 'payment', 'insurance', 'disability', 'ssdi', 'medicare', 'medicaid'], video: 'tv-event-images/bills-money-tv-loop.mp4', poster: 'tv-event-images/bills-money-poster.webp' },
   { keys: ['thanksgiving', 'turkey day'], video: 'tv-event-images/thanksgiving-animated-tv-loop.mp4', poster: 'tv-event-images/thanksgiving-poster.webp' },
   { keys: ['physical therapy', 'physiofit', 'rehab'], video: 'tv-event-images/pt-animated-tv-loop.mp4', poster: 'tv-event-images/pt-poster.webp' },
@@ -856,7 +867,7 @@ function startCountdownAnim(){
 const CD_SCENES = [
   { key: 'clocktower', img: 'tv-event-images/panel-countdown-clocktower.webp' },
   { key: 'rocket', img: 'tv-event-images/panel-countdown-rocket.webp' },
-  { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp' }
+  { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp', video: 'tv-event-images/panel-countdown-scoreboard-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-scoreboard-anim-poster.webp' }
 ];
 function renderCountdownPanel(){
   const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
@@ -873,8 +884,10 @@ function renderCountdownPanel(){
     ? '<div class="cd-hero-special">Today! 🎉</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>'
     : '<div class="cd-hero-special">Out now! 🎵</div><div class="cd-hero-title">' + esc(hero.c.title) + '</div>';
   const subs = rows.slice(1).map(r => '<div class="cd-sub">' + (r.days > 0 ? r.days + ' days — ' : r.days === 0 ? 'Today — ' : 'Out now — ') + esc(r.c.title) + '</div>').join('');
-  return '<div class="cd-fs cd-scene-' + scene.key + '">' +
-    '<img class="cd-bg" src="' + scene.img + '" alt="">' +
+  const bgHtml = scene.video
+    ? '<video class="cd-bg" autoplay muted loop playsinline preload="metadata" poster="' + scene.poster + '"><source src="' + scene.video + '" type="video/mp4"></video>'
+    : '<img class="cd-bg" src="' + scene.img + '" alt="">';
+  return '<div class="cd-fs cd-scene-' + scene.key + '">' + bgHtml +
     '<div class="cd-board">' + heroHtml + subs + '</div></div>';
 }
 
@@ -991,19 +1004,25 @@ function renderTicker(){
 function startBoardAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
-  panel.querySelectorAll('.sticky').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+  panel.querySelectorAll('.bd-note').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
 }
+const BD_SCENES = [
+  { key: 'livingroom', video: 'tv-event-images/panel-board-livingroom-tv-loop.mp4', poster: 'tv-event-images/panel-board-livingroom-poster.webp' },
+  { key: 'porch', video: 'tv-event-images/panel-board-porch-tv-loop.mp4', poster: 'tv-event-images/panel-board-porch-poster.webp' },
+  { key: 'kitchen', video: 'tv-event-images/panel-board-kitchen-tv-loop.mp4', poster: 'tv-event-images/panel-board-kitchen-poster.webp' }
+];
 function renderBoardPanel(){
-  const shownNotes = notes.slice(0, 9);
+  const shownNotes = notes.slice(0, 5);
   if (!shownNotes.length) return '';
-  const notesHtml = '<div class="notes-grid wide">' + shownNotes.map(n => {
-    const rot = (typeof n.rot === 'number' ? n.rot : 0);
+  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
+  const scene = BD_SCENES[doy % BD_SCENES.length];
+  const notesHtml = shownNotes.map(n => {
     const meta = [n.from ? 'From ' + n.from : '', n.to && n.to !== 'family' ? 'To ' + n.to : ''].filter(Boolean).join(' • ');
-    return '<div class="sticky" style="background:' + esc(n.color || '#fde047') + '; --rot:' + rot + 'deg;">' +
-      '<div class="txt">' + esc(n.text) + '</div>' + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + '</div>';
-  }).join('') + '</div>';
-  return '<div class="panel-title">📌 Family <span class="accent">Message Board</span></div>' +
-    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-board-mailman-poster.webp"><source src="tv-event-images/panel-board-mailman-tv-loop.mp4" type="video/mp4"></video></div>' + notesHtml;
+    return '<div class="bd-note">' + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + esc(n.text) + '</div>';
+  }).join('');
+  return '<div class="bd-fs bd-scene-' + scene.key + '">' +
+    '<video class="bd-bg" autoplay muted loop playsinline preload="metadata" poster="' + scene.poster + '"><source src="' + scene.video + '" type="video/mp4"></video>' +
+    '<div class="bd-screen">' + notesHtml + '</div></div>';
 }
 function startNewsAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
