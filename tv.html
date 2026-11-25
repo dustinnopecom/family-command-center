@@ -15,7 +15,7 @@
 
   /* ---- Header ---- */
   header { display:flex; align-items:center; justify-content:space-between; padding:1.6vmin 3vmin 1vmin; gap:2vmin; }
-  .brand { font-weight:900; letter-spacing:.14em; font-size:2.6vmin; color:#fff; white-space:nowrap; }
+  .brand { font-weight:900; letter-spacing:.14em; font-size:2.6vmin; color:#38bdf8; white-space:nowrap; }
   .brand .g { color:#ff2b2b; }
   .brand .sub { display:block; font-size:1.3vmin; letter-spacing:.3em; color:#25d0e8; font-weight:700; margin-top:.3vmin; }
   .clockbox { text-align:right; }
@@ -755,11 +755,27 @@ function mqLines(dateStr){
   if (total > 3) out += '<div class="mq-line">+ ' + (total - 3) + ' more</div>';
   return out;
 }
+const MQ_WEATHER_VIDEOS = {}; /* filled in as Dustin sends each variant: { sunny:{video,poster}, cloudy:{...}, rain:{...}, storm:{...}, fog:{...} } */
+function mqWxKey(code){
+  if (code === 0 || code === 1 || code === 2) return 'sunny';
+  if (code === 3) return 'cloudy';
+  if (code === 45 || code === 48) return 'fog';
+  if (code === 95 || code === 96 || code === 99) return 'storm';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  return 'cloudy';
+}
+function mqVideoFor(){
+  const def = { video: 'tv-event-images/panel-today-marquee-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-anim-poster.webp' };
+  if (!weatherData || !weatherData.length) return def;
+  const v = MQ_WEATHER_VIDEOS[mqWxKey(weatherData[0].j.current.weather_code)];
+  return v || def;
+}
 function renderTodayPanel(){
   const now = new Date();
   const tom = new Date(now); tom.setDate(tom.getDate() + 1);
+  const mq = mqVideoFor();
   return '<div class="today-fs">' +
-    '<video class="mq-bg" autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-today-marquee-anim-poster.webp"><source src="tv-event-images/panel-today-marquee-tv-loop.mp4" type="video/mp4"></video>' +
+    '<video class="mq-bg" autoplay muted loop playsinline preload="metadata" poster="' + mq.poster + '"><source src="' + mq.video + '" type="video/mp4"></video>' +
     '<div class="marquee-board">' +
       '<div class="mq-col"><h3>' + DAYS[now.getDay()].slice(0,3) + ' • ' + (now.getMonth()+1) + '/' + now.getDate() + '</h3>' + mqLines(todayStr()) + '</div>' +
       '<div class="mq-col"><h3>' + DAYS[tom.getDay()].slice(0,3) + ' • ' + (tom.getMonth()+1) + '/' + tom.getDate() + '</h3>' + mqLines(dstr(tom)) + '</div>' +
