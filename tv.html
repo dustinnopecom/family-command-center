@@ -164,6 +164,12 @@
   .cd-scene-clocktower .cd-board { left:43%; top:9%; width:19%; height:21%; }
   .cd-scene-rocket .cd-board { left:38%; top:30%; width:21%; height:28%; }
   .cd-scene-scoreboard .cd-board { left:54%; top:8%; width:36%; height:58%; }
+  .cd-scene-train .cd-board { left:43%; top:29%; width:41%; height:34%; }
+  .cd-scene-train .cd-hero-num { font-size:5.5vmin; color:#fde68a; text-shadow:0 0 1.2vmin rgba(251,191,36,.8); }
+  .cd-scene-train .cd-hero-unit { color:#f87171; }
+  .cd-scene-train .cd-hero-title { font-size:1.9vmin; color:#fef3c7; }
+  .cd-scene-train .cd-sub { font-size:1.5vmin; color:#e2e8f0; }
+  .cd-scene-train .cd-hero-special { color:#fde68a; }
   .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; text-shadow:0 0 1vmin rgba(255,240,180,.45); }
   .cd-scene-clocktower .cd-hero-num { font-size:5vmin; }
   .cd-scene-rocket .cd-hero-num { font-size:4.5vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.6vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.7vmin; } .cd-scene-rocket .cd-sub { font-size:1.35vmin; }
@@ -809,6 +815,7 @@ const EVENT_MEDIA = [
   { keys: ['doctor', 'cardiolog', 'clinic', 'hospital', 'surgery'], video: 'tv-event-images/doctor-tv-loop.mp4', poster: 'tv-event-images/doctor-poster.webp' },
   { keys: ['meds', 'medicine', 'medication', 'readings', 'blood pressure', 'weight', 'weigh'], video: 'tv-event-images/meds-readings-tv-loop.mp4', poster: 'tv-event-images/meds-readings-poster.webp' },
   { keys: ['pharmacy', 'prescription', 'refill'], video: 'tv-event-images/pharmacy-tv-loop.mp4', poster: 'tv-event-images/pharmacy-poster.webp' },
+  { keys: ['oil change', 'change oil', 'tire repair', 'tires', 'tire', 'mechanic', 'auto service', 'auto shop', 'car service', 'car repair', 'tune up', 'tune-up', 'brakes', 'brake', 'alignment', 'car inspection', 'vehicle inspection', 'kia', 'sorento'], video: 'tv-event-images/car-service-tv-loop.mp4', poster: 'tv-event-images/car-service-poster.webp' },
   { keys: ['payday', 'pay day', 'paycheck'], video: 'tv-event-images/payday-tv-loop.mp4', poster: 'tv-event-images/payday-poster.webp' },
   { keys: ['bill', 'payment', 'insurance', 'disability', 'ssdi', 'medicare', 'medicaid'], video: 'tv-event-images/bills-money-tv-loop.mp4', poster: 'tv-event-images/bills-money-poster.webp' },
   { keys: ['thanksgiving', 'turkey day'], video: 'tv-event-images/thanksgiving-animated-tv-loop.mp4', poster: 'tv-event-images/thanksgiving-poster.webp' },
@@ -939,7 +946,8 @@ function startCountdownAnim(){
 const CD_SCENES = [
   { key: 'clocktower', img: 'tv-event-images/panel-countdown-clocktower.webp', video: 'tv-event-images/panel-countdown-clocktower-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-clocktower-anim-poster.webp' },
   { key: 'rocket', img: 'tv-event-images/panel-countdown-rocket.webp', video: 'tv-event-images/panel-countdown-rocket-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-rocket-anim-poster.webp' },
-  { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp', video: 'tv-event-images/panel-countdown-scoreboard-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-scoreboard-anim-poster.webp' }
+  { key: 'scoreboard', img: 'tv-event-images/panel-countdown-scoreboard.webp', video: 'tv-event-images/panel-countdown-scoreboard-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-scoreboard-anim-poster.webp' },
+  { key: 'train', img: 'tv-event-images/panel-countdown-train-poster.webp', video: 'tv-event-images/panel-countdown-train-tv-loop.mp4', poster: 'tv-event-images/panel-countdown-train-poster.webp' }
 ];
 function renderCountdownPanel(){
   const rows = countdowns.map(c => ({ c, target: countdownTarget(c), days: daysUntil(countdownTarget(c)) }))
