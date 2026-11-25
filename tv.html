@@ -564,7 +564,8 @@ const WP_AMBIENTS = [
   { video: 'tv-event-images/empty-zordoh-mowing-tv-loop.mp4', poster: 'tv-event-images/empty-zordoh-mowing-poster.webp' },
   { video: 'tv-event-images/empty-family-couch-sleeping-tv-loop.mp4', poster: 'tv-event-images/empty-family-couch-sleeping-poster.webp' },
   { video: 'tv-event-images/empty-pond-wolf-feeding-fish-tv-loop.mp4', poster: 'tv-event-images/empty-pond-wolf-feeding-fish-poster.webp' },
-  { video: 'tv-event-images/empty-hannah-bed-tv-loop.mp4', poster: 'tv-event-images/empty-hannah-bed-poster.webp' }
+  { video: 'tv-event-images/empty-hannah-bed-tv-loop.mp4', poster: 'tv-event-images/empty-hannah-bed-poster.webp' },
+  { video: 'tv-event-images/empty-dustinnope-logo-tv-loop.mp4', poster: 'tv-event-images/empty-dustinnope-logo-poster.webp', bare: true }
 ];
 let wpIdx = 0, wpOverview = false, wpTimer = null;
 function renderWeeklyPlannerPanel(){
@@ -600,9 +601,9 @@ function renderWeeklyPlannerPanel(){
         '<div class="what">' + esc(first.title) + '</div><div class="when">' + esc(mem.label) + more + '</div></div>';
     } else {
       const amb = WP_AMBIENTS[Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) % WP_AMBIENTS.length];
-      body = '<video autoplay muted loop playsinline preload="auto" poster="' + amb.poster + '" src="' + amb.video + '"></video><div class="wp-cshade"></div>' +
+      body = '<video autoplay muted loop playsinline preload="auto" poster="' + amb.poster + '" src="' + amb.video + '"></video>' + (amb.bare ? '' : '<div class="wp-cshade"></div>') +
         (i === 0 ? '<span class="wp-today">TODAY</span>' : '') +
-        '<div class="wp-cevt"><div class="what">Nothing\'s planned</div></div>';
+        (amb.bare ? '' : '<div class="wp-cevt"><div class="what">Nothing\'s planned</div></div>');
     }
     cards += '<div class="wp-card' + (i === wpIdx && !wpOverview ? ' active' : '') + '">' +
       '<div class="wp-chead" style="background:' + WP_HEAD_COLORS[i] + '">' + esc(head) + '</div>' +
