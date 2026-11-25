@@ -193,7 +193,7 @@
   .bd-note .meta { font-size:1.4vmin; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; }
   .wx-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .wx-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-  .wx-screen { position:absolute; left:60%; top:66%; width:36%; height:28%; z-index:2; background:transparent; border:0; box-shadow:none; padding:0 1vmin; overflow:hidden; color:#fff; }
+  .wx-screen { position:absolute; left:55.5%; top:11%; width:40%; height:45%; z-index:2; background:transparent; border:0; box-shadow:none; padding:1.2vmin 1.6vmin; overflow:hidden; color:#fff; }
   .wx-chip { display:none; }
   .wx-chip.on { display:block; animation: wxChipIn .6s both; }
   @keyframes wxChipIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
@@ -203,6 +203,12 @@
   .wx-chip .meta2 { font-size:1.55vmin; color:#e8eef5; margin-top:.3vmin; }
   .wx-screen .place, .wx-screen .temp, .wx-screen .cond, .wx-screen .meta2, .wx-screen .freeze { text-shadow:0 1px 2px rgba(2,40,90,.95), 0 0 1.4vmin rgba(2,60,120,.8); }
   .wx-chip .freeze { font-size:1.6vmin; font-weight:800; color:#fca5a5; margin-top:.4vmin; }
+  .wx-fdays { display:flex; gap:1vmin; margin-top:1vmin; }
+  .wx-fday { flex:1; text-align:center; }
+  .wx-fday .fd { font-size:1.5vmin; font-weight:900; letter-spacing:.14em; color:#cfe8ff; }
+  .wx-fday .fi { font-size:2.6vmin; line-height:1.15; }
+  .wx-fday .ft { font-size:1.7vmin; font-weight:800; }
+  .wx-screen .fd, .wx-screen .ft { text-shadow:0 1px 2px rgba(2,40,90,.95), 0 0 1.4vmin rgba(2,60,120,.8); }
   .panel-vid { position:relative; border-radius:1.6vmin; overflow:hidden; margin-bottom:2vmin; border:1px solid #262633; }
   .panel-vid { display:flex; justify-content:center; background:#05050a; }
   .panel-vid video { height:36vmin; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -1021,16 +1027,11 @@ function wxStyleFor(){
 }
 function wxVideoFor(code){
   const cur = weatherData && weatherData[0] ? weatherData[0].j.current : null;
-  let cond = (code === 45 || code === 48) ? 'fog' : (code >= 51 && code <= 99 && code !== 71 && code !== 73 && code !== 75 && code !== 77 && code !== 85 && code !== 86) ? 'rain' : 'sunny';
-  if (cur && cur.is_day === 0 && cond === 'sunny') cond = 'night';
-  const style = wxStyleFor();
-  const map = {
-    dogs: { sunny: 'panel-weather-dogs-sunny', rain: 'panel-weather-dogs-rain', fog: 'panel-weather-dogs-fog' },
-    weatherman: { sunny: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', fog: 'panel-weather-weatherman-rain', night: 'panel-weather-weatherman-night' },
-    pond: { sunny: 'panel-weather-pond-sunny', rain: 'panel-weather-pond-rain', fog: 'panel-weather-pond-rain' }
-  }[style];
-  const v = map[cond] || map.sunny;
-  return 'tv-event-images/' + v;
+  const isSnow = (code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86);
+  let cond = (!isSnow && code >= 51 && code <= 99) ? 'rain' : 'day';
+  if (cur && cur.is_day === 0 && cond === 'day') cond = 'night';
+  const map = { day: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', night: 'panel-weather-weatherman-night' };
+  return 'tv-event-images/' + (map[cond] || map.day);
 }
 let wxSwapTimer = null;
 function startWeatherAnim(){
@@ -1060,23 +1061,25 @@ function startWeatherAnim(){
 function wxChip(row){
   const c = row.j.current, w = WCODE[c.weather_code] || ['🌤️','—'];
   const low = Math.round(row.j.daily.temperature_2m_min[0]);
+  const fdays = row.j.daily.time.slice(1).map((d, i) => {
+    const dw = WCODE[row.j.daily.weather_code[i+1]] || ['—','—'];
+    const dt = new Date(d + 'T12:00:00');
+    return '<div class="wx-fday"><div class="fd">' + ['SUN','MON','TUE','WED','THU','FRI','SAT'][dt.getDay()] + '</div>' +
+      '<div class="fi">' + dw[0] + '</div><div class="ft">' + Math.round(row.j.daily.temperature_2m_max[i+1]) + '° / ' + Math.round(row.j.daily.temperature_2m_min[i+1]) + '°</div></div>';
+  }).join('');
   return '<div class="wx-chip"><div class="place">' + row.p.name + ', LA</div>' +
     '<div class="temp">' + w[0] + ' <span class="n" data-temp="' + Math.round(c.temperature_2m) + '">' + Math.round(c.temperature_2m) + '</span>°F</div>' +
     '<div class="cond">' + w[1] + '</div>' +
     '<div class="meta2">Humidity ' + c.relative_humidity_2m + '% • Wind ' + Math.round(c.wind_speed_10m) + ' mph • Tonight\'s low ' + low + '°F</div>' +
-    (low <= 32 ? '<div class="freeze">🥶 HARD FREEZE TONIGHT — pond shutdown</div>' : '') + '</div>';
+    (low <= 32 ? '<div class="freeze">🥶 HARD FREEZE TONIGHT — pond shutdown</div>' : '') +
+    '<div class="wx-fdays">' + fdays + '</div></div>';
 }
 function renderWeatherPanel(){
   if (!weatherData || !weatherData.length) return '';
   const vbase = wxVideoFor(weatherData[0].j.current.weather_code);
-  if (wxStyleFor() === 'weatherman'){
-    const chips = weatherData.slice(0, 2).map(r => wxChip(r)).join('');
-    return '<div class="wx-fs"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video>' +
-      '<div class="wx-screen">' + chips + '</div></div>';
-  }
-  return '<div class="panel-title">🌤️ Local <span class="accent">Weather</span></div>' +
-    '<div class="panel-vid"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video></div>' +
-    '<div class="wx-main">' + wxCard(weatherData[0], true) + (weatherData[1] ? wxCard(weatherData[1], false) : '') + '</div>';
+  const chips = weatherData.slice(0, 2).map(r => wxChip(r)).join('');
+  return '<div class="wx-fs"><video autoplay muted loop playsinline preload="metadata" poster="' + vbase + '-poster.webp"><source src="' + vbase + '-tv-loop.mp4" type="video/mp4"></video>' +
+    '<div class="wx-screen">' + chips + '</div></div>';
 }
 
 /* ================= NEWS + ALERTS ================= */
