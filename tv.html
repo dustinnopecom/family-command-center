@@ -755,8 +755,18 @@ function mqLines(dateStr){
   if (total > 3) out += '<div class="mq-line">+ ' + (total - 3) + ' more</div>';
   return out;
 }
-const MQ_WEATHER_VIDEOS = {}; /* filled in as Dustin sends each variant: { sunny:{video,poster}, cloudy:{...}, rain:{...}, storm:{...}, fog:{...} } */
-function mqWxKey(code){
+const MQ_WEATHER_VIDEOS = {
+  sunny: { video: 'tv-event-images/panel-today-marquee-sunny-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-sunny-poster.webp' },
+  night: { video: 'tv-event-images/panel-today-marquee-night-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-night-poster.webp' },
+  cloudy: { video: 'tv-event-images/panel-today-marquee-cloudy-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-cloudy-poster.webp' },
+  rain: { video: 'tv-event-images/panel-today-marquee-rain-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-rain-poster.webp' },
+  storm: { video: 'tv-event-images/panel-today-marquee-storm-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-storm-poster.webp' },
+  fog: { video: 'tv-event-images/panel-today-marquee-fog-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-fog-poster.webp' },
+  snow: { video: 'tv-event-images/panel-today-marquee-snow-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-snow-poster.webp' }
+};
+function mqWxKey(code, isDay){
+  if (code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86) return 'snow';
+  if (isDay === 0 && (code === 0 || code === 1 || code === 2)) return 'night';
   if (code === 0 || code === 1 || code === 2) return 'sunny';
   if (code === 3) return 'cloudy';
   if (code === 45 || code === 48) return 'fog';
@@ -767,7 +777,7 @@ function mqWxKey(code){
 function mqVideoFor(){
   const def = { video: 'tv-event-images/panel-today-marquee-tv-loop.mp4', poster: 'tv-event-images/panel-today-marquee-anim-poster.webp' };
   if (!weatherData || !weatherData.length) return def;
-  const v = MQ_WEATHER_VIDEOS[mqWxKey(weatherData[0].j.current.weather_code)];
+  const v = MQ_WEATHER_VIDEOS[mqWxKey(weatherData[0].j.current.weather_code, weatherData[0].j.current.is_day)];
   return v || def;
 }
 function renderTodayPanel(){
@@ -962,7 +972,7 @@ async function loadWeather(){
   try {
     const rows = await Promise.all(PLACES.map(async p => {
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon +
-        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
+        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day' +
         '&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=4';
       const r = await fetch(url); const j = await r.json();
       return { p, j };
@@ -997,13 +1007,16 @@ function wxStyleFor(){
   return ['dogs', 'weatherman', 'pond'][doy % 3];
 }
 function wxVideoFor(code){
-  const cond = (code === 45 || code === 48) ? 'fog' : (code >= 51 && code <= 99 && code !== 71 && code !== 73 && code !== 75 && code !== 77 && code !== 85 && code !== 86) ? 'rain' : 'sunny';
+  const cur = weatherData && weatherData[0] ? weatherData[0].j.current : null;
+  let cond = (code === 45 || code === 48) ? 'fog' : (code >= 51 && code <= 99 && code !== 71 && code !== 73 && code !== 75 && code !== 77 && code !== 85 && code !== 86) ? 'rain' : 'sunny';
+  if (cur && cur.is_day === 0 && cond === 'sunny') cond = 'night';
   const style = wxStyleFor();
-  const v = {
+  const map = {
     dogs: { sunny: 'panel-weather-dogs-sunny', rain: 'panel-weather-dogs-rain', fog: 'panel-weather-dogs-fog' },
-    weatherman: { sunny: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', fog: 'panel-weather-weatherman-rain' },
+    weatherman: { sunny: 'panel-weather-weatherman-sunny', rain: 'panel-weather-weatherman-rain', fog: 'panel-weather-weatherman-rain', night: 'panel-weather-weatherman-night' },
     pond: { sunny: 'panel-weather-pond-sunny', rain: 'panel-weather-pond-rain', fog: 'panel-weather-pond-rain' }
-  }[style][cond];
+  }[style];
+  const v = map[cond] || map.sunny;
   return 'tv-event-images/' + v;
 }
 let wxSwapTimer = null;
