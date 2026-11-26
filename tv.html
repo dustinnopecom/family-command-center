@@ -191,7 +191,7 @@
   .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
   .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .bd-fs .bd-fill { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:blur(26px) brightness(.5); transform:scale(1.12); }
-  .bd-fs .bd-bg { position:absolute; left:0; top:0; width:100%; height:96.5%; object-fit:contain; display:block; }
+  .bd-fs .bd-bg { position:absolute; left:0; top:0; width:100%; height:92%; object-fit:contain; display:block; }
   .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:center; gap:.8vmin; overflow:hidden; padding:3% 4%; box-sizing:border-box; background:transparent; border:0; box-shadow:none; }
   .bd-scene-livingroom .bd-screen { left:64%; top:20%; width:33%; height:41%; }
   .bd-scene-porch .bd-screen { left:63.5%; top:9%; width:29%; height:37%; }
@@ -803,7 +803,7 @@ function armFit(panel, vSel, run){
   }
 }
 const CD_FIT = { clocktower: [0.435, 0.13, 0.18, 0.17], rocket: [0.63, 0.27, 0.23, 0.19], scoreboard: [0.555, 0.18, 0.33, 0.225], train: [0.46, 0.395, 0.37, 0.26] };
-const BD_FIT = { livingroom: [0.64, 0.185, 0.33, 0.45], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
+const BD_FIT = { livingroom: [0.515, 0.095, 0.44, 0.565], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
 function fitInner(panel, boxSel, innerSel){
   const box = panel.querySelector(boxSel), inner = panel.querySelector(innerSel);
   if (!box || !inner) return;
