@@ -177,16 +177,16 @@
   .cd-scene-train .cd-hero-num { font-size:5vmin; color:#fde68a; text-shadow:0 0 1.2vmin rgba(251,191,36,.8); }
   .cd-scene-train .cd-hero-unit { color:#f87171; }
   .cd-scene-train .cd-hero-title { font-size:1.8vmin; color:#fef3c7; }
-  .cd-scene-train .cd-sub { font-size:1.4vmin; color:#e2e8f0; }
+  .cd-scene-train .cd-sub { font-size:1.6vmin; color:#e2e8f0; }
   .cd-scene-train .cd-hero-special { color:#fde68a; }
   .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; text-shadow:0 0 1vmin rgba(255,240,180,.45); }
   .cd-scene-clocktower .cd-hero-num { font-size:4.2vmin; } .cd-scene-clocktower .cd-hero-unit { font-size:1.3vmin; } .cd-scene-clocktower .cd-hero-title { font-size:1.3vmin; }
-  .cd-scene-scoreboard .cd-hero-num { font-size:4.3vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.5vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.6vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.2vmin; }
-  .cd-scene-rocket .cd-hero-num { font-size:4vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.3vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.4vmin; } .cd-scene-rocket .cd-sub { font-size:1.15vmin; }
+  .cd-scene-scoreboard .cd-hero-num { font-size:4.3vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.5vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.6vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.45vmin; }
+  .cd-scene-rocket .cd-hero-num { font-size:4vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.3vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.4vmin; } .cd-scene-rocket .cd-sub { font-size:1.35vmin; }
   .cd-hero-unit { font-size:2vmin; font-weight:800; letter-spacing:.3em; color:#b91c1c; text-transform:uppercase; }
   .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; white-space:normal; line-height:1.2; }
   .cd-scene-clocktower .cd-hero-title { font-size:1.6vmin; }
-  .cd-sub { font-size:1.6vmin; font-weight:700; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; white-space:normal; line-height:1.25; }
+  .cd-sub { font-size:1.8vmin; font-weight:800; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; white-space:normal; line-height:1.25; }
   .cd-scene-clocktower .cd-sub { display:none; }
   .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
   .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
@@ -202,6 +202,8 @@
   .bd-note:nth-child(2) { animation-delay:.2s; } .bd-note:nth-child(3) { animation-delay:.4s; } .bd-note:nth-child(4) { animation-delay:.6s; } .bd-note:nth-child(5) { animation-delay:.8s; }
   @keyframes bdIn { from { opacity:0; transform:translateY(.6vmin); } to { opacity:1; transform:none; } }
   .bd-note .meta { font-size:1.4vmin; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; }
+  .bd-note.announce { font-weight:700; }
+  .bd-note.announce .meta { color:#b91c1c; font-weight:800; }
   .wx-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .wx-fs video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
   .wx-screen { position:absolute; left:55.5%; top:11%; width:40%; height:45%; z-index:2; background:transparent; border:0; box-shadow:none; padding:1.2vmin 1.6vmin; overflow:hidden; color:#fff; }
@@ -1164,7 +1166,8 @@ async function loadNews(){
     const r = await fetch('https://api.weather.gov/alerts/active?area=LA&status=actual', { headers:{ 'Accept':'application/geo+json' } });
     const j = await r.json();
     (j.features || []).slice(0, 3).forEach(f => {
-      alerts.push('⚠️ ' + f.properties.event + ': ' + (f.properties.headline || f.properties.areaDesc || ''));
+      const ev = f.properties.event || '', head = f.properties.headline || f.properties.areaDesc || '';
+      alerts.push('⚠️ ' + (head.toLowerCase().startsWith(ev.toLowerCase()) ? head : ev + ': ' + head));
     });
   } catch(e){ /* alerts optional */ }
   try {
@@ -1210,7 +1213,8 @@ function renderBoardPanel(){
   const scene = BD_SCENES[doy % BD_SCENES.length];
   const notesHtml = shownNotes.map(n => {
     const meta = [n.from ? 'From ' + n.from : '', n.to && n.to !== 'family' ? 'To ' + n.to : ''].filter(Boolean).join(' • ');
-    return '<div class="bd-note">' + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + esc(n.text) + '</div>';
+    const ann = /bob/i.test(n.from || '');
+    return '<div class="bd-note' + (ann ? ' announce' : '') + '">' + (meta ? '<div class="meta">' + (ann ? '📢 ' : '') + esc(meta) + '</div>' : '') + esc(n.text) + '</div>';
   }).join('');
   return '<div class="bd-fs bd-scene-' + scene.key + '">' +
     '<img class="bd-fill" src="' + scene.poster + '" alt="">' +
