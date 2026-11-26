@@ -181,7 +181,7 @@
   .cd-scene-train .cd-hero-special { color:#fde68a; }
   .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; text-shadow:0 0 1vmin rgba(255,240,180,.45); }
   .cd-scene-clocktower .cd-hero-num { font-size:4.2vmin; } .cd-scene-clocktower .cd-hero-unit { font-size:1.3vmin; } .cd-scene-clocktower .cd-hero-title { font-size:1.3vmin; }
-  .cd-scene-scoreboard .cd-hero-num { font-size:4.6vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.6vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.7vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.25vmin; }
+  .cd-scene-scoreboard .cd-hero-num { font-size:4.3vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.5vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.6vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.2vmin; }
   .cd-scene-rocket .cd-hero-num { font-size:4vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.3vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.4vmin; } .cd-scene-rocket .cd-sub { font-size:1.15vmin; }
   .cd-hero-unit { font-size:2vmin; font-weight:800; letter-spacing:.3em; color:#b91c1c; text-transform:uppercase; }
   .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; white-space:normal; line-height:1.2; }
@@ -802,7 +802,7 @@ function armFit(panel, vSel, run){
     window.addEventListener('resize', run);
   }
 }
-const CD_FIT = { clocktower: [0.435, 0.12, 0.18, 0.18], rocket: [0.63, 0.26, 0.23, 0.20], scoreboard: [0.555, 0.165, 0.33, 0.24], train: [0.46, 0.385, 0.37, 0.27] };
+const CD_FIT = { clocktower: [0.435, 0.13, 0.18, 0.17], rocket: [0.63, 0.27, 0.23, 0.19], scoreboard: [0.555, 0.18, 0.33, 0.225], train: [0.46, 0.395, 0.37, 0.26] };
 const BD_FIT = { livingroom: [0.64, 0.185, 0.33, 0.45], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
 function fitInner(panel, boxSel, innerSel){
   const box = panel.querySelector(boxSel), inner = panel.querySelector(innerSel);
