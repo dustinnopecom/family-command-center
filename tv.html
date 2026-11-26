@@ -162,10 +162,10 @@
   .cd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .cd-fs .cd-fill { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:blur(26px) brightness(.5); transform:scale(1.12); }
   .cd-fs .cd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
-  .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:2% 6%; box-sizing:border-box; }
-  .cd-inner { display:flex; flex-direction:column; align-items:center; gap:.3vmin; width:100%; transform-origin:center center; }
-  .bd-inner { display:flex; flex-direction:column; gap:.8vmin; width:100%; transform-origin:center center; }
-  .music-inner { display:flex; flex-direction:column; align-items:center; width:100%; transform-origin:center center; }
+  .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:1vmin 2vmin; box-sizing:border-box; }
+  .cd-inner { display:flex; flex-direction:column; align-items:center; gap:.3vmin; width:100%; flex:none; transform-origin:center center; }
+  .bd-inner { display:flex; flex-direction:column; gap:.8vmin; width:100%; flex:none; transform-origin:center center; }
+  .music-inner { display:flex; flex-direction:column; align-items:center; width:100%; flex:none; transform-origin:center center; }
   .cd-divider { width:55%; border-top:.35vmin solid rgba(185,28,28,.55); margin:.6vmin 0; }
   .cd-scene-clocktower .cd-divider { display:none; }
   .cd-scene-scoreboard .cd-sub { font-size:1.9vmin; margin-top:.9vmin; }
@@ -192,8 +192,8 @@
   .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .bd-fs .bd-fill { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:blur(26px) brightness(.5); transform:scale(1.12); }
   .bd-fs .bd-bg { position:absolute; left:0; top:0; width:100%; height:92%; object-fit:contain; display:block; }
-  .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:center; gap:.8vmin; overflow:hidden; padding:3% 4%; box-sizing:border-box; background:transparent; border:0; box-shadow:none; }
-  .bd-scene-livingroom .bd-screen { left:64%; top:20%; width:33%; height:41%; }
+  .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:center; gap:.8vmin; overflow:hidden; padding:1.2vmin 1.6vmin; box-sizing:border-box; background:transparent; border:0; box-shadow:none; }
+  .bd-scene-livingroom .bd-screen { left:52%; top:12%; width:44%; height:54%; }
   .bd-scene-porch .bd-screen { left:63.5%; top:9%; width:29%; height:37%; }
   .bd-scene-kitchen .bd-screen { left:57%; top:20%; width:35%; height:40%; }
   .bd-scene-porch .bd-note { font-size:1.7vmin; line-height:1.3; }
@@ -802,13 +802,15 @@ function armFit(panel, vSel, run){
     window.addEventListener('resize', run);
   }
 }
-const CD_FIT = { clocktower: [0.435, 0.13, 0.18, 0.17], rocket: [0.63, 0.27, 0.23, 0.19], scoreboard: [0.555, 0.18, 0.33, 0.225], train: [0.46, 0.395, 0.37, 0.26] };
-const BD_FIT = { livingroom: [0.515, 0.095, 0.44, 0.565], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
+const CD_FIT = { clocktower: [0.44, 0.07, 0.16, 0.19], rocket: [0.385, 0.37, 0.18, 0.24], scoreboard: [0.56, 0.16, 0.37, 0.44], train: [0.465, 0.33, 0.355, 0.42] };
+const BD_FIT = { livingroom: [0.525, 0.125, 0.435, 0.535], porch: [0.54, 0.06, 0.37, 0.40], kitchen: [0.46, 0.075, 0.50, 0.53] };
 function fitInner(panel, boxSel, innerSel){
   const box = panel.querySelector(boxSel), inner = panel.querySelector(innerSel);
   if (!box || !inner) return;
   inner.style.transform = 'none';
-  const bw = box.clientWidth, bh = box.clientHeight;
+  const cs = getComputedStyle(box);
+  const bw = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const bh = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   const iw = inner.scrollWidth, ih = inner.scrollHeight;
   if (!bw || !bh || !iw || !ih) return;
   const s = Math.min(1, bw / iw, bh / ih);
@@ -1197,7 +1199,7 @@ function startBoardAnim(){
   panel.querySelectorAll('.bd-note').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
 }
 const BD_SCENES = [
-  { key: 'livingroom', video: 'tv-event-images/panel-board-livingroom-tv-loop.mp4', poster: 'tv-event-images/panel-board-livingroom-anim-poster.webp' },
+  { key: 'livingroom', video: 'tv-event-images/panel-board-livingroom-tv-loop.mp4', poster: 'tv-event-images/panel-board-livingroom-tv-loop-poster.webp' },
   { key: 'porch', video: 'tv-event-images/panel-board-porch-tv-loop.mp4', poster: 'tv-event-images/panel-board-porch-anim-poster.webp' },
   { key: 'kitchen', video: 'tv-event-images/panel-board-kitchen-tv-loop.mp4', poster: 'tv-event-images/panel-board-kitchen-anim-poster.webp' }
 ];
