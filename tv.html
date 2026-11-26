@@ -181,17 +181,17 @@
   .cd-scene-train .cd-hero-special { color:#fde68a; }
   .cd-hero-num { font-size:6.5vmin; line-height:1; font-weight:800; color:#1e293b; text-shadow:0 0 1vmin rgba(255,240,180,.45); }
   .cd-scene-clocktower .cd-hero-num { font-size:4.2vmin; } .cd-scene-clocktower .cd-hero-unit { font-size:1.3vmin; } .cd-scene-clocktower .cd-hero-title { font-size:1.3vmin; }
-  .cd-scene-scoreboard .cd-hero-num { font-size:5vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.7vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.8vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.35vmin; }
+  .cd-scene-scoreboard .cd-hero-num { font-size:4.6vmin; } .cd-scene-scoreboard .cd-hero-unit { font-size:1.6vmin; } .cd-scene-scoreboard .cd-hero-title { font-size:1.7vmin; } .cd-scene-scoreboard .cd-sub { font-size:1.25vmin; }
   .cd-scene-rocket .cd-hero-num { font-size:4vmin; } .cd-scene-rocket .cd-hero-unit { font-size:1.3vmin; } .cd-scene-rocket .cd-hero-title { font-size:1.4vmin; } .cd-scene-rocket .cd-sub { font-size:1.15vmin; }
   .cd-hero-unit { font-size:2vmin; font-weight:800; letter-spacing:.3em; color:#b91c1c; text-transform:uppercase; }
-  .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cd-hero-title { font-size:2.1vmin; font-weight:800; letter-spacing:.08em; color:#1e293b; text-transform:uppercase; margin-top:.6vmin; max-width:100%; white-space:normal; line-height:1.2; }
   .cd-scene-clocktower .cd-hero-title { font-size:1.6vmin; }
-  .cd-sub { font-size:1.6vmin; font-weight:700; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cd-sub { font-size:1.6vmin; font-weight:700; letter-spacing:.05em; color:#334155; text-transform:uppercase; margin-top:.5vmin; max-width:100%; white-space:normal; line-height:1.25; }
   .cd-scene-clocktower .cd-sub { display:none; }
   .cd-hero-special { font-size:3vmin; font-weight:800; color:#b91c1c; text-transform:uppercase; }
   .bd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .bd-fs .bd-fill { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:blur(26px) brightness(.5); transform:scale(1.12); }
-  .bd-fs .bd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+  .bd-fs .bd-bg { position:absolute; left:0; top:0; width:100%; height:96.5%; object-fit:contain; display:block; }
   .bd-screen { position:absolute; z-index:2; display:flex; flex-direction:column; justify-content:center; gap:.8vmin; overflow:hidden; padding:3% 4%; box-sizing:border-box; background:transparent; border:0; box-shadow:none; }
   .bd-scene-livingroom .bd-screen { left:64%; top:20%; width:33%; height:41%; }
   .bd-scene-porch .bd-screen { left:63.5%; top:9%; width:29%; height:37%; }
@@ -802,7 +802,7 @@ function armFit(panel, vSel, run){
     window.addEventListener('resize', run);
   }
 }
-const CD_FIT = { clocktower: [0.435, 0.11, 0.18, 0.19], rocket: [0.63, 0.245, 0.23, 0.22], scoreboard: [0.555, 0.145, 0.33, 0.27], train: [0.46, 0.37, 0.37, 0.29] };
+const CD_FIT = { clocktower: [0.435, 0.12, 0.18, 0.18], rocket: [0.63, 0.26, 0.23, 0.20], scoreboard: [0.555, 0.165, 0.33, 0.24], train: [0.46, 0.385, 0.37, 0.27] };
 const BD_FIT = { livingroom: [0.64, 0.185, 0.33, 0.45], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
 function fitInner(panel, boxSel, innerSel){
   const box = panel.querySelector(boxSel), inner = panel.querySelector(innerSel);
