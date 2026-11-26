@@ -1163,7 +1163,7 @@ function renderWeatherPanel(){
 async function loadNews(){
   alerts = []; headlines = [];
   try {
-    const r = await fetch('https://api.weather.gov/alerts/active?area=LA&status=actual', { headers:{ 'Accept':'application/geo+json' } });
+    const r = await fetch('https://api.weather.gov/alerts/active?point=29.63987,-90.53948&status=actual', { headers:{ 'Accept':'application/geo+json' } });
     const j = await r.json();
     (j.features || []).slice(0, 3).forEach(f => {
       const ev = f.properties.event || '', head = f.properties.headline || f.properties.areaDesc || '';
