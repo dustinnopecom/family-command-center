@@ -162,15 +162,18 @@
   .cd-fs { position:relative; flex:1; min-height:62vmin; border-radius:1.6vmin; overflow:hidden; border:1px solid #262633; background:#05050a; }
   .cd-fs .cd-fill { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:blur(26px) brightness(.5); transform:scale(1.12); }
   .cd-fs .cd-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
-  .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.3vmin; text-align:center; overflow:hidden; padding:2% 6%; box-sizing:border-box; }
+  .cd-board { position:absolute; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:2% 6%; box-sizing:border-box; }
+  .cd-inner { display:flex; flex-direction:column; align-items:center; gap:.3vmin; width:100%; transform-origin:center center; }
+  .bd-inner { display:flex; flex-direction:column; gap:.8vmin; width:100%; transform-origin:center center; }
+  .music-inner { display:flex; flex-direction:column; align-items:center; width:100%; transform-origin:center center; }
   .cd-divider { width:55%; border-top:.35vmin solid rgba(185,28,28,.55); margin:.6vmin 0; }
   .cd-scene-clocktower .cd-divider { display:none; }
   .cd-scene-scoreboard .cd-sub { font-size:1.9vmin; margin-top:.9vmin; }
   .cd-scene-train .cd-sub { margin-top:.9vmin; }
-  .cd-scene-clocktower .cd-board { left:43.5%; top:10%; width:18%; height:20%; }
-  .cd-scene-rocket .cd-board { left:63%; top:23%; width:23%; height:24%; }
-  .cd-scene-scoreboard .cd-board { left:55.5%; top:13%; width:33%; height:29%; }
-  .cd-scene-train .cd-board { left:46%; top:36%; width:37%; height:30%; }
+  .cd-scene-clocktower .cd-board { left:43.5%; top:11%; width:18%; height:19%; }
+  .cd-scene-rocket .cd-board { left:63%; top:24.5%; width:23%; height:22%; }
+  .cd-scene-scoreboard .cd-board { left:55.5%; top:14.5%; width:33%; height:27%; }
+  .cd-scene-train .cd-board { left:46%; top:37%; width:37%; height:29%; }
   .cd-scene-train .cd-hero-num { font-size:5vmin; color:#fde68a; text-shadow:0 0 1.2vmin rgba(251,191,36,.8); }
   .cd-scene-train .cd-hero-unit { color:#f87171; }
   .cd-scene-train .cd-hero-title { font-size:1.8vmin; color:#fef3c7; }
@@ -799,8 +802,18 @@ function armFit(panel, vSel, run){
     window.addEventListener('resize', run);
   }
 }
-const CD_FIT = { clocktower: [0.435, 0.10, 0.18, 0.20], rocket: [0.63, 0.23, 0.23, 0.24], scoreboard: [0.555, 0.13, 0.33, 0.29], train: [0.46, 0.36, 0.37, 0.30] };
-const BD_FIT = { livingroom: [0.64, 0.20, 0.33, 0.41], porch: [0.635, 0.09, 0.29, 0.37], kitchen: [0.57, 0.20, 0.35, 0.40] };
+const CD_FIT = { clocktower: [0.435, 0.11, 0.18, 0.19], rocket: [0.63, 0.245, 0.23, 0.22], scoreboard: [0.555, 0.145, 0.33, 0.27], train: [0.46, 0.37, 0.37, 0.29] };
+const BD_FIT = { livingroom: [0.64, 0.185, 0.33, 0.45], porch: [0.635, 0.075, 0.29, 0.40], kitchen: [0.57, 0.185, 0.35, 0.44] };
+function fitInner(panel, boxSel, innerSel){
+  const box = panel.querySelector(boxSel), inner = panel.querySelector(innerSel);
+  if (!box || !inner) return;
+  inner.style.transform = 'none';
+  const bw = box.clientWidth, bh = box.clientHeight;
+  const iw = inner.scrollWidth, ih = inner.scrollHeight;
+  if (!bw || !bh || !iw || !ih) return;
+  const s = Math.min(1, bw / iw, bh / ih);
+  if (s < 1) inner.style.transform = 'scale(' + s + ')';
+}
 function startTodayAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
@@ -998,7 +1011,7 @@ function startCountdownAnim(){
   if (!panel) return;
   const fs = panel.querySelector('.cd-fs');
   const key = fs ? (fs.className.match(/cd-scene-(\w+)/) || [])[1] : null;
-  if (key && CD_FIT[key]) armFit(panel, '.cd-bg', () => fitVideoBox(panel, '.cd-bg', '.cd-board', CD_FIT[key]));
+  if (key && CD_FIT[key]) armFit(panel, '.cd-bg', () => { fitVideoBox(panel, '.cd-bg', '.cd-board', CD_FIT[key]); fitInner(panel, '.cd-board', '.cd-inner'); });
   const num = panel.querySelector('.cd-hero-num');
   const target = parseInt(num && num.dataset.days, 10);
   if (!num || isNaN(target) || target <= 0) return;
@@ -1036,7 +1049,7 @@ function renderCountdownPanel(){
     ? '<img class="cd-fill" src="' + scene.poster + '" alt=""><video class="cd-bg" autoplay muted loop playsinline preload="metadata" poster="' + scene.poster + '"><source src="' + scene.video + '" type="video/mp4"></video>'
     : '<img class="cd-bg" src="' + scene.img + '" alt="">';
   return '<div class="cd-fs cd-scene-' + scene.key + '">' + bgHtml +
-    '<div class="cd-board">' + heroHtml + divider + subs + '</div></div>';
+    '<div class="cd-board"><div class="cd-inner">' + heroHtml + divider + subs + '</div></div></div>';
 }
 
 /* ================= WEATHER ================= */
@@ -1180,7 +1193,7 @@ function startBoardAnim(){
   if (!panel) return;
   const fs = panel.querySelector('.bd-fs');
   const key = fs ? (fs.className.match(/bd-scene-(\w+)/) || [])[1] : null;
-  if (key && BD_FIT[key]) armFit(panel, '.bd-bg', () => fitVideoBox(panel, '.bd-bg', '.bd-screen', BD_FIT[key]));
+  if (key && BD_FIT[key]) armFit(panel, '.bd-bg', () => { fitVideoBox(panel, '.bd-bg', '.bd-screen', BD_FIT[key]); fitInner(panel, '.bd-screen', '.bd-inner'); });
   panel.querySelectorAll('.bd-note').forEach((el) => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
 }
 const BD_SCENES = [
@@ -1200,7 +1213,7 @@ function renderBoardPanel(){
   return '<div class="bd-fs bd-scene-' + scene.key + '">' +
     '<img class="bd-fill" src="' + scene.poster + '" alt="">' +
     '<video class="bd-bg" autoplay muted loop playsinline preload="metadata" poster="' + scene.poster + '"><source src="' + scene.video + '" type="video/mp4"></video>' +
-    '<div class="bd-screen">' + notesHtml + '</div></div>';
+    '<div class="bd-screen"><div class="bd-inner">' + notesHtml + '</div></div></div>';
 }
 let newsSwapTimer = null;
 function startNewsAnim(){
@@ -1249,14 +1262,14 @@ function renderMusicPanel(){
   return '<div class="music-fs">' +
     '<img class="music-fill" src="tv-event-images/panel-music-spotlight-poster.webp" alt="">' +
     '<video class="music-bg" autoplay muted loop playsinline preload="metadata" poster="tv-event-images/panel-music-spotlight-poster.webp"><source src="tv-event-images/panel-music-spotlight-tv-loop.mp4" type="video/mp4"></video>' +
-    '<div class="music-screen"><div class="music-kicker">Dustinnope</div><div class="music-title">I Was Never Done</div>' +
+    '<div class="music-screen"><div class="music-inner"><div class="music-kicker">Dustinnope</div><div class="music-title">I Was Never Done</div>' +
     '<div class="music-line">' + line + '</div><div class="music-divider"></div>' +
-    '<div class="music-now">Now streaming: Dustinnope Volume 1</div></div></div>';
+    '<div class="music-now">Now streaming: Dustinnope Volume 1</div></div></div></div>';
 }
 function startMusicAnim(){
   const panel = document.querySelector('#panelHost .panel.active');
   if (!panel) return;
-  armFit(panel, '.music-bg', () => fitVideoBox(panel, '.music-bg', '.music-screen', [0.54, 0.16, 0.35, 0.38]));
+  armFit(panel, '.music-bg', () => { fitVideoBox(panel, '.music-bg', '.music-screen', [0.54, 0.17, 0.35, 0.36]); fitInner(panel, '.music-screen', '.music-inner'); });
 }
 function renderLogoPanel(){
   return '<div class="logo-fs">' +
