@@ -1160,6 +1160,11 @@ function renderPhotoPanel(){
   let src = 'family-photo.jpg';
   try { src = localStorage.getItem('fcc_photo_v1') || src; } catch(e){}
   src = PREVIEW_IMAGES['family-photo.jpg'] && src === 'family-photo.jpg' ? PREVIEW_IMAGES['family-photo.jpg'] : src;
+  if (src === 'family-photo.jpg'){
+    return '<div class="photo-wrap"><img class="photo-bg" src="tv-event-images/family-photo-poster.webp" alt="">' +
+      '<video class="photo-fg" autoplay muted loop playsinline preload="metadata" poster="tv-event-images/family-photo-poster.webp"><source src="tv-event-images/family-photo-tv-loop.mp4" type="video/mp4"></video>' +
+      (caption ? '<div class="photo-cap">' + esc(caption) + '</div>' : '') + '</div>';
+  }
   return '<div class="photo-wrap"><img class="photo-bg" src="' + src + '" alt=""><img class="photo-fg" src="' + src + '" alt="">' +
     (caption ? '<div class="photo-cap">' + esc(caption) + '</div>' : '') + '</div>';
 }
